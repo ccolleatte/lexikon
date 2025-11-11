@@ -1,0 +1,352 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "version": "1.2.0",
+  "term": {
+    "label": "aliénation",
+    "slug": "alienation",
+    "language": "fr",
+    "pronunciation": "[a.lje.na.sjɔ̃]"
+  },
+  "definitions": {
+    "short": "Perte de maîtrise de soi ou de sa production, processus par lequel l'individu devient étranger à lui-même.",
+    "long": "L'aliénation désigne le processus par lequel un individu ou un groupe perd le contrôle sur sa propre existence, ses productions ou son essence. Concept philosophique majeur développé par Hegel puis transformé par Marx, l'aliénation décrit initialement le moment où l'Esprit se rend étranger à lui-même dans son développement dialectique (Hegel). Marx matérialise ce concept en analysant comment, dans le système capitaliste, le travailleur devient étranger à quatre niveaux : au produit de son travail (qui appartient au capitaliste), à son activité productive (qui devient contrainte externe), à son être générique (sa nature humaine créatrice), et aux autres hommes (rapport de concurrence). Le concept a ensuite été élargi par l'École de Francfort (aliénation culturelle), les situationnistes (aliénation spectaculaire), et la psychanalyse (aliénation psychique). Aujourd'hui, l'aliénation reste un outil critique pour analyser les formes contemporaines de dépossession : aliénation numérique, consumériste, ou écologique.",
+    "contextual": [
+      {
+        "school": "Hegel",
+        "definition": "Moment nécessaire du développement de l'Esprit où celui-ci se pose comme autre pour mieux se retrouver.",
+        "period": "1807-1831",
+        "key_difference": "Processus métaphysique positif vs perte négative chez Marx"
+      },
+      {
+        "school": "Marx",
+        "definition": "Dépossession quadruple du travailleur dans le mode de production capitaliste : produit, activité, essence, autrui.",
+        "period": "1844-1867",
+        "key_difference": "Matérialisation économique du concept hégélien"
+      },
+      {
+        "school": "Lukács",
+        "definition": "Réification des rapports sociaux transformés en rapports entre choses, extension de l'aliénation à la conscience.",
+        "period": "1923-1971",
+        "key_difference": "Focus sur la conscience de classe et la totalité"
+      },
+      {
+        "school": "École de Francfort",
+        "definition": "Aliénation culturelle par l'industrie culturelle qui standardise la conscience.",
+        "period": "1940-1970",
+        "key_difference": "Extension au domaine culturel et médiatique"
+      }
+    ]
+  },
+  "domain": {
+    "primary": "SHS",
+    "secondary": ["Philosophie", "Sociologie", "Économie politique"],
+    "interdisciplinary": ["Psychologie", "Sciences du travail", "Études culturelles"]
+  },
+  "relations": [
+    {
+      "type": "is_a",
+      "target_id": "7f2e9b5c-3a4d-4e6f-8b1a-9c0d1e2f3a4b",
+      "target_label": "dépossession",
+      "strength": 0.9,
+      "symmetric": false,
+      "temporal": null,
+      "note": "L'aliénation est une forme spécifique de dépossession touchant l'essence même de l'être"
+    },
+    {
+      "type": "part_of",
+      "target_id": "8a3f4b6d-4b5e-5f7a-9c2b-0d1e2f3a4b5c",
+      "target_label": "théorie critique",
+      "strength": 0.95,
+      "symmetric": false,
+      "temporal": null,
+      "note": "Concept central de la critique sociale"
+    },
+    {
+      "type": "employs",
+      "target_id": "9b4a5c7e-5c6f-6a8b-0d3c-1e2f3a4b5c6d",
+      "target_label": "travail",
+      "strength": 0.85,
+      "symmetric": false,
+      "temporal": null,
+      "note": "Le travail est le médiateur principal de l'aliénation chez Marx"
+    },
+    {
+      "type": "employs",
+      "target_id": "0c5b6d8f-6d7a-7b9c-1e4d-2f3a4b5c6d7e",
+      "target_label": "dialectique",
+      "strength": 0.8,
+      "symmetric": false,
+      "temporal": null,
+      "note": "Méthode d'analyse du processus d'aliénation"
+    },
+    {
+      "type": "opposes",
+      "target_id": "1d6c7e9a-7e8b-8c0d-2f5e-3a4b5c6d7e8f",
+      "target_label": "émancipation",
+      "strength": 1.0,
+      "symmetric": true,
+      "temporal": null,
+      "note": "L'émancipation est le processus inverse de l'aliénation"
+    },
+    {
+      "type": "related_to",
+      "target_id": "2e7d8f0b-8f9c-9d1e-3a6f-4b5c6d7e8f9a",
+      "target_label": "réification",
+      "strength": 0.75,
+      "symmetric": true,
+      "temporal": null,
+      "note": "Concepts proches mais distincts : réification = transformation en chose"
+    },
+    {
+      "type": "influenced_by",
+      "target_id": "3f8e9a1c-9a0d-0e2f-4b7a-5c6d7e8f9a0b",
+      "target_label": "Hegel",
+      "strength": 0.9,
+      "symmetric": false,
+      "temporal": {
+        "from": "1807",
+        "to": "1844"
+      },
+      "note": "Marx inverse la dialectique hégélienne de l'aliénation"
+    },
+    {
+      "type": "causes",
+      "target_id": "4a9f0b2d-0b1e-1f3a-5c8b-6d7e8f9a0b1c",
+      "target_label": "fausse conscience",
+      "strength": 0.7,
+      "symmetric": false,
+      "temporal": null,
+      "note": "L'aliénation produit une conscience inversée de la réalité"
+    },
+    {
+      "type": "precedes",
+      "target_id": "5b0a1c3e-1c2f-2a4b-6d9c-7e8f9a0b1c2d",
+      "target_label": "société du spectacle",
+      "strength": 0.8,
+      "symmetric": false,
+      "temporal": {
+        "from": "1844",
+        "to": "1967"
+      },
+      "note": "Évolution du concept vers l'analyse de la société spectaculaire (Debord)"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Karl Marx",
+      "role": "contributor",
+      "period": "1844-1883",
+      "school": "Matérialisme historique",
+      "contribution": "Matérialisation et politisation du concept hégélien, analyse économique de l'aliénation"
+    },
+    {
+      "name": "Georg Wilhelm Friedrich Hegel",
+      "role": "creator",
+      "period": "1807-1831",
+      "school": "Idéalisme allemand",
+      "contribution": "Création du concept dans la Phénoménologie de l'Esprit"
+    },
+    {
+      "name": "György Lukács",
+      "role": "contributor",
+      "period": "1923-1971",
+      "school": "Marxisme occidental",
+      "contribution": "Extension via le concept de réification et conscience de classe"
+    },
+    {
+      "name": "Herbert Marcuse",
+      "role": "contributor",
+      "period": "1941-1979",
+      "school": "École de Francfort",
+      "contribution": "Aliénation dans la société industrielle avancée, homme unidimensionnel"
+    }
+  ],
+  "citations": [
+    {
+      "quote": "Le travail produit des merveilles pour les riches, mais il produit le dénuement pour l'ouvrier. Il produit des palais, mais des tanières pour l'ouvrier. Il produit la beauté, mais l'étiolement pour l'ouvrier.",
+      "author": "Karl Marx",
+      "title": "Manuscrits économico-philosophiques de 1844",
+      "publisher": "Éditions Sociales",
+      "year": 1972,
+      "page": "58-59",
+      "doi": null,
+      "url": null
+    },
+    {
+      "quote": "L'aliénation de l'homme, et en général tout rapport dans lequel l'homme se trouve avec lui-même, ne se réalise et ne s'exprime que dans le rapport où l'homme se trouve avec les autres hommes.",
+      "author": "Karl Marx",
+      "title": "Manuscrits de 1844",
+      "publisher": "Éditions Sociales",
+      "year": 1972,
+      "page": "67",
+      "doi": null,
+      "url": null
+    },
+    {
+      "quote": "La conscience de soi est en soi et pour soi quand et parce qu'elle est en soi et pour soi pour une autre conscience de soi ; c'est-à-dire qu'elle n'est qu'en tant qu'être reconnu.",
+      "author": "G.W.F. Hegel",
+      "title": "Phénoménologie de l'Esprit",
+      "publisher": "Aubier",
+      "year": 1991,
+      "page": "155",
+      "doi": null,
+      "url": null
+    }
+  ],
+  "synonyms": [
+    {
+      "term": "dépossession",
+      "type": "synonym",
+      "language": "fr",
+      "context": "Général",
+      "period": null,
+      "note": "Terme plus général, moins philosophique"
+    },
+    {
+      "term": "Entfremdung",
+      "type": "translation",
+      "language": "de",
+      "context": "Philosophie allemande",
+      "period": "1807-present",
+      "note": "Terme original chez Hegel et Marx"
+    },
+    {
+      "term": "estrangement",
+      "type": "translation",
+      "language": "en",
+      "context": "Philosophie anglo-saxonne",
+      "period": null,
+      "note": "Traduction standard en anglais"
+    },
+    {
+      "term": "objectivation",
+      "type": "variant",
+      "language": "fr",
+      "context": "Hegel",
+      "period": "1807-1831",
+      "note": "Moment positif chez Hegel, négatif chez Marx"
+    },
+    {
+      "term": "réification",
+      "type": "variant",
+      "language": "fr",
+      "context": "Lukács",
+      "period": "1923-present",
+      "note": "Transformation des rapports sociaux en choses"
+    }
+  ],
+  "competency_questions": [
+    {
+      "level": "basic",
+      "question": "Qu'est-ce que l'aliénation selon Marx ?",
+      "expected_answer": "La perte de contrôle du travailleur sur le produit de son travail, son activité, son essence humaine et ses relations sociales.",
+      "evaluation_criteria": ["Mention des 4 niveaux", "Contexte capitaliste", "Dimension de perte/dépossession"]
+    },
+    {
+      "level": "intermediate",
+      "question": "Comment le concept d'aliénation évolue-t-il de Hegel à Marx ?",
+      "expected_answer": "Hegel conçoit l'aliénation comme moment nécessaire et positif du développement de l'Esprit. Marx matérialise et inverse ce concept en analysant la dépossession concrète du travailleur dans le capitalisme.",
+      "evaluation_criteria": ["Distinction idéalisme/matérialisme", "Inversion dialectique", "Passage du métaphysique à l'économique"]
+    },
+    {
+      "level": "advanced",
+      "question": "En quoi le concept d'aliénation reste-t-il pertinent pour analyser la société numérique contemporaine ?",
+      "expected_answer": "L'aliénation numérique reproduit les mécanismes classiques : dépossession des données personnelles (produit), addiction aux plateformes (activité), modification de l'identité par les réseaux sociaux (essence), atomisation sociale (relations).",
+      "evaluation_criteria": ["Application contemporaine", "Parallèles structurels", "Analyse critique", "Nouveaux enjeux"]
+    }
+  ],
+  "validation": {
+    "status": "validated",
+    "last_validation": "2025-11-11T10:30:00Z",
+    "validators": [
+      {
+        "name": "Dr. Marie Dupont",
+        "institution": "Sorbonne",
+        "date": "2025-11-10T14:00:00Z",
+        "decision": "approved",
+        "score": 92,
+        "comments": "Excellente synthèse multi-écoles, relations bien formalisées"
+      },
+      {
+        "name": "Prof. Jean Martin",
+        "institution": "ENS",
+        "date": "2025-11-11T10:30:00Z",
+        "decision": "approved",
+        "score": 88,
+        "comments": "Ajout suggéré : dimension psychanalytique (Lacan)"
+      }
+    ],
+    "conflicts": [],
+    "quality_score": 90,
+    "priority_score": 95,
+    "checklist_passed": {
+      "automatic": {
+        "has_short_definition": true,
+        "has_long_definition": true,
+        "has_sources": true,
+        "has_relations": true,
+        "no_circular_relations": true,
+        "domain_assigned": true,
+        "unique_slug": true
+      },
+      "expert": {
+        "definitions_accurate": true,
+        "relations_coherent": true,
+        "sources_reliable": true,
+        "historical_context_correct": true,
+        "clear_distinctions": true,
+        "no_ideological_bias": true,
+        "completeness": true
+      }
+    }
+  },
+  "embeddings": {
+    "model": "sentence-transformers/all-mpnet-base-v2",
+    "dimensions": 768,
+    "generated_at": "2025-11-11T10:35:00Z",
+    "source_text": "L'aliénation désigne le processus par lequel un individu ou un groupe perd le contrôle sur sa propre existence..."
+  },
+  "usage_metrics": {
+    "api_requests": 1247,
+    "llm_injections": 423,
+    "search_appearances": 892,
+    "validation_views": 67,
+    "last_accessed": "2025-11-11T15:45:32Z",
+    "popularity_rank": 12
+  },
+  "metadata": {
+    "created_at": "2025-10-15T09:00:00Z",
+    "updated_at": "2025-11-11T10:35:00Z",
+    "created_by": "claude.opus@lexicon.ai",
+    "last_modified_by": "marie.dupont@sorbonne.fr",
+    "version_history": [
+      {
+        "version": "1.0.0",
+        "date": "2025-10-15T09:00:00Z",
+        "changes": "Création initiale"
+      },
+      {
+        "version": "1.1.0",
+        "date": "2025-11-01T14:00:00Z",
+        "changes": "Ajout relations École de Francfort"
+      },
+      {
+        "version": "1.2.0",
+        "date": "2025-11-11T10:35:00Z",
+        "changes": "Enrichissement citations, validation complète"
+      }
+    ],
+    "external_ids": {
+      "wikidata": "Q179899",
+      "dbpedia": "http://dbpedia.org/resource/Social_alienation",
+      "viaf": null,
+      "unesco_thesaurus": "concept6734"
+    },
+    "editorial_notes": "Terme fondamental nécessitant mise à jour régulière selon évolutions théoriques. Envisager ajout dimension écologique (aliénation à la nature) et numérique (données personnelles).",
+    "improvement_suggestions": [
+      "Ajouter perspective psychanalytique (Lacan)",
+      "Développer aliénation genrée (féminisme)",
+      "Inclure critiques post-coloniales du concept"
+    ]
+  }
+}
