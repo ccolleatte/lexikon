@@ -29,7 +29,8 @@ lexikon/
 │   │   ├── analyse-critique-opus-v03-p2.md      (Recommandations & architecture)
 │   │   ├── analyse-plan-travail-v03.md          (Analyse du plan opérationnel)
 │   │   ├── analyse-ux-parcours-critiques-v03.md (Analyse UX complète + parcours)
-│   │   └── analyse-ux-executive-summary.md      (Résumé exécutif UX)
+│   │   ├── analyse-ux-executive-summary.md      (Résumé exécutif UX)
+│   │   └── addendum-llm-strategy-monetization.md (Stratégie LLM-agnostique + freemium)
 │   │
 │   └── specifications/        # Spécifications produit et techniques
 │       ├── PRD-ontologie-v03.md                 (Product Requirements Document complet)
@@ -57,6 +58,7 @@ lexikon/
 | **plan** | Critique du Plan_Travail_v0.3, points manquants | 50 |
 | **🆕 UX parcours** | Analyse UX complète, 8 frictions, 7 recommandations, 3 niveaux d'adoption | 70 |
 | **🆕 UX exec** | Résumé exécutif UX pour stakeholders (lecture 3 min) | 12 |
+| **🆕 LLM strategy** | Architecture LLM-agnostique, BYOK, stratégie freemium révisée | 18 |
 
 ### 📋 Spécifications (`docs/specifications/`)
 
