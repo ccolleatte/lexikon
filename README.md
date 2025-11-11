@@ -27,7 +27,9 @@ lexikon/
 │   ├── analyses/              # Analyses critiques approfondies
 │   │   ├── analyse-critique-opus-v03-p1.md      (Forces & zones d'ombre)
 │   │   ├── analyse-critique-opus-v03-p2.md      (Recommandations & architecture)
-│   │   └── analyse-plan-travail-v03.md          (Analyse du plan opérationnel)
+│   │   ├── analyse-plan-travail-v03.md          (Analyse du plan opérationnel)
+│   │   ├── analyse-ux-parcours-critiques-v03.md (Analyse UX complète + parcours)
+│   │   └── analyse-ux-executive-summary.md      (Résumé exécutif UX)
 │   │
 │   └── specifications/        # Spécifications produit et techniques
 │       ├── PRD-ontologie-v03.md                 (Product Requirements Document complet)
@@ -53,6 +55,8 @@ lexikon/
 | **p1** | Forces de l'approche Gemini, zones d'ombre techniques | 80 |
 | **p2** | Architecture détaillée, recommandations, modèle DB | 150 |
 | **plan** | Critique du Plan_Travail_v0.3, points manquants | 50 |
+| **🆕 UX parcours** | Analyse UX complète, 8 frictions, 7 recommandations, 3 niveaux d'adoption | 70 |
+| **🆕 UX exec** | Résumé exécutif UX pour stakeholders (lecture 3 min) | 12 |
 
 ### 📋 Spécifications (`docs/specifications/`)
 

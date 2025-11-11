@@ -39,6 +39,222 @@ Lexikon est actuellement en **phase de conception pré-développement**. La plat
 | **Analyste/Étudiant** | 🟡 P1 | Hebdo | ⭐⭐ Faible | Faible |
 | **Data Scientist** | 🟡 P1 | Daily | ⭐⭐⭐⭐ Élevée | Moyen |
 
+### 🆕 Dimension Temporelle Critique : Niveaux d'Adoption
+
+**Insight clé** : La majorité des utilisateurs ont un besoin **temporel limité** (projet ponctuel, année académique, contrat client) plutôt qu'un usage continu.
+
+#### Patterns de Durée d'Usage Observés
+
+| Persona | Durée Typique | Pattern d'Usage | Exemple Cas Réel |
+|---------|---------------|-----------------|------------------|
+| **Étudiant** | 6 mois | Unique → Terminé | Mémoire de Master |
+| **Chercheur** | 1-2 ans | Projet-based, peut récidiver | ANR, thèse |
+| **Développeur IA** | Variable | Client-specific, peut s'intégrer long-terme | POC → Prod |
+| **Data Scientist** | Ponctuel | Corpus-specific, peut récidiver | Annotation projet |
+
+#### Implication Stratégique
+
+**Ne PAS forcer tous les utilisateurs dans un parcours "power user"**
+
+3 niveaux d'adoption nécessaires dès l'onboarding :
+
+##### 🟢 Niveau 1 : "Quick Project" (Usage Temporaire)
+**Cible** : Étudiant, Data Scientist ponctuel
+**Besoin** : Ontologie opérationnelle en 30 min, usage, export, terminé
+**Engagement** : Minimal, self-service
+**Conversion** : 20% reviennent pour nouveau projet
+
+```
+Parcours optimisé :
+1. Template pré-rempli (domaine)
+2. Import glossaire existant (wizard)
+3. Enrichissement rapide (IA, 10-20 termes)
+4. Utilisation (requêtes basiques)
+5. Export final (JSON-LD, RDF)
+
+Time-to-value : < 30 minutes
+Tier : Free (suffisant)
+Validation : Optionnelle (pas HITL obligatoire)
+```
+
+##### 🟡 Niveau 2 : "Research Project" (Usage Projet)
+**Cible** : Chercheur, Projet 1-2 ans
+**Besoin** : Ontologie de qualité, validation experte, publication
+**Engagement** : Modéré, collaboratif
+**Conversion** : 30% nouveau projet, 10% deviennent validateurs
+
+```
+Parcours optimisé :
+1. Définition domaine et scope
+2. Import + création manuelle (mixte)
+3. Ajout relations (AI-assisted)
+4. Soumission validation (HITL)
+5. Itérations avec validateurs
+6. Publication et citation (DOI)
+7. Archivage ou transfert (fin projet)
+
+Time-to-value : < 48h (premier terme validé)
+Tier : Pro (collaboration)
+Validation : HITL obligatoire
+```
+
+##### 🔴 Niveau 3 : "Production Integration" (Usage Continu)
+**Cible** : Développeur IA, Long-terme
+**Besoin** : API production, performance, SLA
+**Engagement** : Élevé, mission-critical
+**Conversion** : 50% paid, 30% contrats annuels
+
+```
+Parcours optimisé :
+1. Documentation API et playground
+2. Intégration SDK (Python/JS)
+3. Tests pipeline enrichissement
+4. Monitoring (latence, erreurs)
+5. Scale et optimisation
+6. Abonnement updates ontologie
+
+Time-to-value : < 2h (première requête API)
+Tier : Team/Enterprise (SLA, support)
+Validation : Consommation (pas création)
+```
+
+#### Premier Écran d'Onboarding (Choix du Niveau)
+
+```
+┌────────────────────────────────────────────────────┐
+│ 👋 Bienvenue sur Lexikon !                         │
+│                                                     │
+│ Comment prévoyez-vous d'utiliser Lexikon ?         │
+│                                                     │
+│ ○ Projet Rapide (Étudiant, usage ponctuel)         │
+│   "J'ai besoin d'une ontologie pour mon mémoire"   │
+│   → Setup 30 min, export quand terminé             │
+│   → Gratuit, pas de validation obligatoire         │
+│                                                     │
+│ ○ Projet de Recherche (Académique, 1-2 ans)        │
+│   "Je construis une ontologie de qualité pour      │
+│    publication"                                     │
+│   → Validation experte, collaboration              │
+│   → Formule Pro recommandée                        │
+│                                                     │
+│ ○ API Production (Développeur, long-terme)         │
+│   "J'intègre Lexikon dans mon application"         │
+│   → API-first, monitoring, SLA                     │
+│   → Formule Team/Enterprise                        │
+│                                                     │
+│ [Pas sûr ? Quiz 2 minutes]                         │
+└────────────────────────────────────────────────────┘
+```
+
+#### Stratégie de Conversion : Temporaire → Récurrent
+
+**Principe** : Ne pas forcer l'engagement initial, mais créer des chemins d'upgrade
+
+##### Étudiant (Quick) → Chercheur (Projet suivant)
+```
+Déclencheurs :
+- Fin de projet approchante : "Exportez votre travail"
+- Expérience positive : "Nouvelle ontologie pour prochain projet ?"
+- Effet réseau : "3 camarades utilisent Lexikon"
+
+Tactiques conversion :
+- Archivage gratuit ontologie précédente
+- Réduction utilisateur récurrent
+- Bonus parrainage
+```
+
+##### Chercheur (Projet) → Champion (Récurrent)
+```
+Déclencheurs :
+- Plusieurs projets sur plateforme
+- Engagement élevé (>100 termes validés)
+- Invitation de collaborateurs
+
+Tactiques conversion :
+- Devenir expert validateur (rôle)
+- Publication case study
+- Invitation advisory board
+```
+
+##### Développeur (Test) → Production (Long-terme)
+```
+Déclencheurs :
+- Seuil usage API franchi
+- Métriques performance positives
+- Projet client en production
+
+Tactiques conversion :
+- Transition Free → Paid fluide
+- Réductions volume
+- Support dédié
+```
+
+#### Métriques de Succès par Niveau d'Adoption
+
+##### Quick Project (Utilisateurs Temporaires)
+```
+Acquisition :
+- Inscription → premier terme : < 30 min
+- Succès import : > 70%
+
+Engagement :
+- Termes créés : 20-100 (suffisant pour petit projet)
+- Période active : 1-6 mois
+- Taux export : > 80% (complétion)
+
+Satisfaction :
+- NPS : > 7/10
+- "Recommanderait" : > 70%
+
+Conversion :
+- Retour nouveau projet : > 20%
+- Upgrade payant : > 5%
+```
+
+##### Research Project (Utilisateurs Périodiques)
+```
+Acquisition :
+- Complétion onboarding : > 70%
+- Premier terme validé : < 48h
+
+Engagement :
+- Termes créés : 100-500
+- Cycles validation : 2-5 par terme
+- Collaborateurs invités : 1-3
+- Période active : 6-24 mois
+
+Qualité :
+- Taux validation : > 80%
+- Complétude relations : > 90%
+
+Conversion :
+- Publication ontologie : > 50%
+- Nouveau projet : > 30%
+- Devenir validateur : > 10%
+```
+
+##### Production Integration (Utilisateurs Continus)
+```
+Acquisition :
+- Temps intégration API : < 2h
+- Déploiement production : < 1 semaine
+
+Technique :
+- Requêtes/jour : 1k-100k
+- Latence P95 : < 200ms
+- Taux erreur : < 1%
+- Uptime : > 99.9%
+
+Business :
+- Conversion payant : > 50%
+- Contrat annuel : > 30%
+- Expansion revenue : +30%/an
+
+Rétention :
+- Churn mensuel : < 5%
+- NPS : > 8/10
+```
+
 ---
 
 ## 🎯 Parcours Critiques Identifiés
