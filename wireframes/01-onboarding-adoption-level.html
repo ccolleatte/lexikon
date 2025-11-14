@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lexikon - Onboarding | Choix Niveau d'Adoption</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Import Design Tokens */
+    :root {
+      /* Colors */
+      --color-primary-500: #3b82f6;
+      --color-primary-600: #2563eb;
+      --color-primary-700: #1d4ed8;
+      --color-gray-50: #f9fafb;
+      --color-gray-100: #f3f4f6;
+      --color-gray-200: #e5e7eb;
+      --color-gray-300: #d1d5db;
+      --color-gray-400: #9ca3af;
+      --color-gray-500: #6b7280;
+      --color-gray-600: #4b5563;
+      --color-gray-700: #374151;
+      --color-gray-800: #1f2937;
+      --color-gray-900: #111827;
+      --color-white: #ffffff;
+
+      /* Typography */
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+      --text-3xl: 1.875rem;
+      --font-normal: 400;
+      --font-medium: 500;
+      --font-semibold: 600;
+      --font-bold: 700;
+
+      /* Spacing */
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+
+      /* Radius */
+      --radius-lg: 0.5rem;
+      --radius-xl: 0.75rem;
+
+      /* Shadow */
+      --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-primary-500) 0%, var(--color-white) 100%);
+      background-size: 100% 300px;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      color: var(--color-gray-900);
+      line-height: 1.5;
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: var(--space-12);
+    }
+
+    .logo {
+      font-size: var(--text-3xl);
+      font-weight: var(--font-bold);
+      color: var(--color-primary-600);
+      margin-bottom: var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--text-xl);
+    }
+
+    .header h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-semibold);
+      color: var(--color-gray-800);
+      margin-bottom: var(--space-3);
+    }
+
+    .header p {
+      font-size: var(--text-lg);
+      color: var(--color-gray-600);
+    }
+
+    /* Radio Cards */
+    .radio-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+
+    .radio-card {
+      position: relative;
+      background: var(--color-white);
+      border: 2px solid var(--color-gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .radio-card:hover {
+      border-color: var(--color-primary-500);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .radio-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .radio-card input[type="radio"]:checked + .card-content {
+      border-left: 4px solid var(--color-primary-600);
+      padding-left: calc(var(--space-6) - 4px);
+    }
+
+    .radio-card input[type="radio"]:checked ~ .card-header::before {
+      background: var(--color-primary-600);
+      border-color: var(--color-primary-600);
+    }
+
+    .radio-card input[type="radio"]:checked ~ .card-header::after {
+      transform: scale(1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+      position: relative;
+      padding-left: 32px;
+    }
+
+    .card-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--color-gray-300);
+      border-radius: 50%;
+      background: var(--color-white);
+      transition: all 0.2s;
+    }
+
+    .card-header::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-white);
+      transform: scale(0);
+      transition: transform 0.2s;
+    }
+
+    .card-icon {
+      font-size: var(--text-3xl);
+      flex-shrink: 0;
+    }
+
+    .card-title-group {
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: var(--text-xl);
+      font-weight: var(--font-semibold);
+      color: var(--color-gray-900);
+      margin-bottom: var(--space-2);
+    }
+
+    .card-subtitle {
+      font-size: var(--text-sm);
+      color: var(--color-gray-500);
+      font-weight: var(--font-medium);
+    }
+
+    .card-description {
+      font-size: var(--text-base);
+      color: var(--color-gray-700);
+      margin-bottom: var(--space-4);
+      font-style: italic;
+    }
+
+    .card-features {
+      list-style: none;
+      margin-bottom: var(--space-3);
+    }
+
+    .card-features li {
+      font-size: var(--text-sm);
+      color: var(--color-gray-600);
+      padding-left: 24px;
+      position: relative;
+      margin-bottom: var(--space-2);
+    }
+
+    .card-features li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--color-primary-500);
+      font-weight: var(--font-bold);
+    }
+
+    .card-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--color-gray-100);
+      color: var(--color-gray-700);
+      border-radius: 9999px;
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+    }
+
+    .card-badge.free {
+      background: var(--color-primary-500);
+      color: var(--color-white);
+    }
+
+    .card-badge.pro {
+      background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+      color: var(--color-white);
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: 12px 24px;
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      font-weight: var(--font-medium);
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-sans);
+    }
+
+    .btn-primary {
+      background: var(--color-primary-600);
+      color: var(--color-white);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--color-primary-700);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-gray-700);
+    }
+
+    .btn-ghost:hover {
+      background: var(--color-gray-100);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container {
+        padding: var(--space-4);
+      }
+
+      .logo {
+        font-size: var(--text-2xl);
+      }
+
+      .header h1 {
+        font-size: var(--text-xl);
+      }
+
+      .header p {
+        font-size: var(--text-base);
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card-icon {
+        font-size: var(--text-2xl);
+      }
+
+      .card-title {
+        font-size: var(--text-lg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">📚</div>
+        <span>LEXIKON</span>
+      </div>
+      <h1>👋 Bienvenue sur Lexikon !</h1>
+      <p>Comment prévoyez-vous d'utiliser Lexikon ?</p>
+    </div>
+
+    <!-- Radio Cards -->
+    <form id="onboarding-form" class="radio-cards">
+
+      <!-- Option 1: Quick Project -->
+      <label class="radio-card">
+        <input type="radio" name="adoption-level" value="quick-project" required>
+        <div class="card-content">
+          <div class="card-header">
+            <div class="card-icon">🚀</div>
+            <div class="card-title-group">
+              <div class="card-title">Projet Rapide</div>
+              <div class="card-subtitle">Étudiant, usage ponctuel</div>
+            </div>
+          </div>
+          <p class="card-description">
+            "J'ai besoin d'une ontologie pour mon mémoire"
+          </p>
+          <ul class="card-features">
+            <li>Setup en 30 minutes</li>
+            <li>Export quand terminé</li>
+            <li>Gratuit, pas de validation obligatoire</li>
+          </ul>
+          <span class="card-badge free">Gratuit</span>
+        </div>
+      </label>
+
+      <!-- Option 2: Research Project -->
+      <label class="radio-card">
+        <input type="radio" name="adoption-level" value="research-project" required>
+        <div class="card-content">
+          <div class="card-header">
+            <div class="card-icon">🎓</div>
+            <div class="card-title-group">
+              <div class="card-title">Projet de Recherche</div>
+              <div class="card-subtitle">Académique, 1-2 ans</div>
+            </div>
+          </div>
+          <p class="card-description">
+            "Je construis une ontologie de qualité pour publication"
+          </p>
+          <ul class="card-features">
+            <li>Validation experte, collaboration</li>
+            <li>Publications et citations (DOI)</li>
+            <li>Formule Pro recommandée</li>
+          </ul>
+          <span class="card-badge pro">Pro - 49€/mois</span>
+        </div>
+      </label>
+
+      <!-- Option 3: Production API -->
+      <label class="radio-card">
+        <input type="radio" name="adoption-level" value="production-api" required>
+        <div class="card-content">
+          <div class="card-header">
+            <div class="card-icon">⚡</div>
+            <div class="card-title-group">
+              <div class="card-title">API Production</div>
+              <div class="card-subtitle">Développeur, long-terme</div>
+            </div>
+          </div>
+          <p class="card-description">
+            "J'intègre Lexikon dans mon application"
+          </p>
+          <ul class="card-features">
+            <li>API-first, monitoring, SLA</li>
+            <li>BYOK illimité (votre clé LLM)</li>
+            <li>Formule Team/Enterprise</li>
+          </ul>
+          <span class="card-badge">Team - 199€/mois</span>
+        </div>
+      </label>
+    </form>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button type="submit" form="onboarding-form" class="btn btn-primary" id="continue-btn" disabled>
+        Continuer →
+      </button>
+      <a href="#quiz" class="btn btn-ghost">Pas sûr ? → Quiz 2 minutes</a>
+    </div>
+  </div>
+
+  <script>
+    // Enable continue button when selection is made
+    const form = document.getElementById('onboarding-form');
+    const continueBtn = document.getElementById('continue-btn');
+    const radios = document.querySelectorAll('input[name="adoption-level"]');
+
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        continueBtn.disabled = false;
+      });
+    });
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const selectedValue = document.querySelector('input[name="adoption-level"]:checked')?.value;
+      console.log('Selected adoption level:', selectedValue);
+
+      // In real app, this would navigate to next step
+      alert(`Vous avez choisi : ${selectedValue}\n\nProchaine étape : Configuration de votre profil`);
+    });
+  </script>
+</body>
+</html>
