@@ -60,6 +60,12 @@ lexikon/
 | **🆕 UX exec** | Résumé exécutif UX pour stakeholders (lecture 3 min) | 12 |
 | **🆕 LLM strategy** | Architecture LLM-agnostique, BYOK, stratégie freemium révisée | 18 |
 
+### 🎨 Design (`docs/design/`)
+
+| Document | Contenu | Pages |
+|----------|---------|-------|
+| **🆕 Design System Figma** | Structure Figma, palette académique, 12 composants, 6 wireframes ASCII | 45 |
+
 ### 📋 Spécifications (`docs/specifications/`)
 
 | Document | Contenu | Utilité |
