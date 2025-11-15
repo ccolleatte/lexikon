@@ -241,6 +241,8 @@ describe('authStore', () => {
 		});
 
 		it('should reset to initial state', () => {
+			// Clear localStorage first since reset() calls getInitialState() which reads from localStorage
+			localStorage.clear();
 			authStore.reset();
 
 			const state = get(authStore);

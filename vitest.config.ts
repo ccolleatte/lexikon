@@ -11,9 +11,17 @@ export default defineConfig({
 		include: ['src/**/*.{test,spec}.{js,ts}'],
 		coverage: {
 			reporter: ['text', 'json', 'html'],
+			include: [
+				'src/lib/**/*.{js,ts}',
+				'!src/lib/components/**',
+				'!src/lib/**/*.test.{js,ts}',
+				'!src/lib/**/*.spec.{js,ts}'
+			],
 			exclude: [
 				'node_modules/',
 				'src/test/',
+				'src/routes/**',
+				'src/hooks.client.ts',
 				'*.config.{js,ts}',
 				'**/*.d.ts',
 				'**/*.config.{js,ts}',
@@ -27,7 +35,9 @@ export default defineConfig({
 		alias: {
 			$lib: path.resolve('./src/lib'),
 			$types: path.resolve('./src/lib/types'),
-			$components: path.resolve('./src/lib/components')
+			$components: path.resolve('./src/lib/components'),
+			'$app/environment': path.resolve('./src/test/mocks/app-environment.ts'),
+			'$app/navigation': path.resolve('./src/test/mocks/app-navigation.ts')
 		}
 	}
 });
