@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Design Tokens */
+@import '../docs/design/design-tokens.css';
+
+/* Global styles */
+@layer base {
+	body {
+		@apply font-sans text-gray-900 bg-gray-50;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		@apply font-semibold;
+	}
+
+	/* Remove default button styles */
+	button {
+		@apply font-sans;
+	}
+}
+
+/* Custom utilities */
+@layer utilities {
+	.focus-ring {
+		@apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+	}
+
+	.focus-ring-error {
+		@apply focus:outline-none focus:ring-2 focus:ring-error-500 focus:ring-offset-2;
+	}
+}

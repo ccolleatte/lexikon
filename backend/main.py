@@ -1,0 +1,52 @@
+"""
+Lexikon API - Sprint 1 MVP
+FastAPI backend with in-memory database for development.
+"""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from api import onboarding, users, terms
+
+# Create FastAPI app
+app = FastAPI(
+    title="Lexikon API",
+    description="Generic Lexical Ontology Service",
+    version="0.1.0",
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(onboarding.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
+app.include_router(terms.router, prefix="/api")
+
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "name": "Lexikon API",
+        "version": "0.1.0",
+        "status": "running",
+        "docs": "/docs",
+    }
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

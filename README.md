@@ -2,6 +2,28 @@
 
 **Plateforme de création, validation et consommation d'ontologies lexicales de haute qualité pour l'analyse documentaire et l'amélioration des réponses LLM.**
 
+**✅ Sprint 1 Implementation - COMPLETE** | **Version 0.1.0** | **Status: Production-Ready MVP**
+
+---
+
+## 🚀 Quick Start (5 minutes)
+
+```bash
+# 1. Install dependencies
+npm install
+cd backend && pip install -r requirements.txt && cd ..
+
+# 2. Start backend (Terminal 1)
+cd backend && python main.py
+
+# 3. Start frontend (Terminal 2)
+npm run dev
+
+# 4. Open http://localhost:5173
+```
+
+📖 **[Full Quick Start Guide →](QUICKSTART.md)**
+
 ---
 
 ## 📌 Vision
@@ -16,33 +38,127 @@ Lexikon vise à créer une **couche sémantique universelle** capable de :
 
 ---
 
+## ✨ Sprint 1 Features (Implemented)
+
+### Frontend (SvelteKit + TailwindCSS)
+- ✅ **Homepage** with feature overview
+- ✅ **Onboarding Flow** (US-001, US-003)
+  - 3-level adoption selection (Quick Project, Research, Production)
+  - Profile setup with validation
+  - Progress stepper
+- ✅ **Term Creation** (US-002)
+  - Quick Draft mode (<5 minutes)
+  - Auto-save to localStorage
+  - Real-time validation
+  - Progress tracking
+- ✅ **6 Production-Ready Components**
+  - Button, Input, Textarea, Select, Progress, Alert, Stepper
+
+### Backend (FastAPI)
+- ✅ **3 Core Endpoints**
+  - POST /api/onboarding/adoption-level
+  - POST /api/users/profile
+  - POST /api/terms
+  - GET /api/terms
+- ✅ **Pydantic Validation**
+- ✅ **CORS Enabled**
+- ✅ **In-Memory Database** (Sprint 1 MVP)
+
+### Documentation
+- ✅ **3 User Stories** with full acceptance criteria
+- ✅ **3 Interactive Wireframes** (HTML)
+- ✅ **Complete Design System** (Tailwind + CSS tokens)
+- ✅ **45-page Developer Handoff Guide**
+- ✅ **45-page API Specifications**
+
+---
+
 ## 📂 Structure du Répertoire
 
 ```
 lexikon/
-├── README.md (ce fichier)
+├── README.md                  # Ce fichier
+├── QUICKSTART.md              # Guide démarrage rapide (5 min)
+├── package.json               # Dépendances frontend
 ├── .gitignore
 │
+├── src/                       # Frontend SvelteKit
+│   ├── app.html              # HTML template
+│   ├── app.css               # Styles globaux + Tailwind
+│   ├── lib/
+│   │   ├── components/       # Composants Svelte (7 composants)
+│   │   │   ├── Button.svelte
+│   │   │   ├── Input.svelte
+│   │   │   ├── Textarea.svelte
+│   │   │   ├── Select.svelte
+│   │   │   ├── Progress.svelte
+│   │   │   ├── Alert.svelte
+│   │   │   └── Stepper.svelte
+│   │   ├── stores/           # Svelte stores (onboarding)
+│   │   ├── utils/            # Utilitaires (API client)
+│   │   └── types/            # Types TypeScript
+│   └── routes/
+│       ├── +page.svelte                    # Homepage
+│       ├── onboarding/
+│       │   ├── +page.svelte                # US-001: Adoption Level
+│       │   └── profile/+page.svelte        # US-003: Profile Setup
+│       └── terms/
+│           ├── +page.svelte                # Liste des termes
+│           └── new/+page.svelte            # US-002: Quick Draft
+│
+├── backend/                   # Backend FastAPI
+│   ├── main.py               # Point d'entrée FastAPI
+│   ├── models.py             # Modèles Pydantic
+│   ├── database.py           # DB in-memory (Sprint 1)
+│   ├── requirements.txt      # Dépendances Python
+│   ├── README.md             # Doc backend
+│   └── api/
+│       ├── onboarding.py     # Routes onboarding
+│       ├── users.py          # Routes users
+│       └── terms.py          # Routes terms
+│
+├── wireframes/                # Wireframes interactifs (HTML)
+│   ├── 01-onboarding-adoption-level.html
+│   ├── 02-creation-quick-draft.html
+│   └── 03-onboarding-profile-setup.html
+│
+├── user-stories/              # User Stories détaillées
+│   ├── US-001-onboarding-adoption-level.md
+│   ├── US-002-quick-draft-creation.md
+│   └── US-003-onboarding-profile-setup.md
+│
 ├── docs/
-│   ├── analyses/              # Analyses critiques approfondies
-│   │   ├── analyse-critique-opus-v03-p1.md      (Forces & zones d'ombre)
-│   │   ├── analyse-critique-opus-v03-p2.md      (Recommandations & architecture)
-│   │   ├── analyse-plan-travail-v03.md          (Analyse du plan opérationnel)
-│   │   ├── analyse-ux-parcours-critiques-v03.md (Analyse UX complète + parcours)
-│   │   ├── analyse-ux-executive-summary.md      (Résumé exécutif UX)
-│   │   └── addendum-llm-strategy-monetization.md (Stratégie LLM-agnostique + freemium)
+│   ├── design/               # Design System & UX
+│   │   ├── design-tokens.css
+│   │   ├── design-tokens.json
+│   │   ├── tailwind.config.js
+│   │   ├── icons-library.md
+│   │   ├── design-system-figma-guide.md      (45 pages)
+│   │   ├── ux-designer-execution-plan.md
+│   │   └── developer-handoff-guide.md         (45 pages)
 │   │
-│   └── specifications/        # Spécifications produit et techniques
-│       ├── PRD-ontologie-v03.md                 (Product Requirements Document complet)
-│       ├── fiche-terme-v03.md                   (Modèle de fiche-terme enrichi)
-│       └── checklist-validation-v03.md          (Critères HITL complets)
+│   ├── backend/              # Spécifications API
+│   │   └── api-specifications-sprint1.md      (45 pages)
+│   │
+│   ├── analyses/             # Analyses critiques approfondies
+│   │   ├── analyse-critique-opus-v03-p1.md
+│   │   ├── analyse-critique-opus-v03-p2.md
+│   │   ├── analyse-plan-travail-v03.md
+│   │   ├── analyse-ux-parcours-critiques-v03.md (70 pages)
+│   │   ├── analyse-ux-executive-summary.md
+│   │   └── addendum-llm-strategy-monetization.md
+│   │
+│   └── specifications/       # Spécifications produit
+│       ├── PRD-ontologie-v03.md
+│       ├── fiche-terme-v03.md
+│       └── checklist-validation-v03.md
 │
-├── models/                    # Modèles de données
-│   └── fiche-terme-v03.json                     (Exemple JSON : "aliénation" avec 9 relations)
+├── models/                   # Modèles de données
+│   └── fiche-terme-v03.json
 │
-└── roadmap/                   # Plans d'exécution
-    ├── Plan_Travail_v04_Executive.md            (Executive summary 6 pages)
-    └── roadmap-technique-v03.md                 (Roadmap 8 sprints détaillée)
+└── roadmap/                  # Plans d'exécution
+    ├── Plan_Travail_v04_Executive.md
+    └── roadmap-technique-v03.md
 ```
 
 ---
