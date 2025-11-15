@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$components/Button.svelte';
+	import { isAuthenticated, user } from '$lib/stores/auth';
 </script>
 
 <svelte:head>
@@ -24,13 +25,28 @@
 		</div>
 
 		<div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-			<Button href="/onboarding" variant="primary" size="lg">
-				Commencer →
-			</Button>
-			<Button href="/terms" variant="outline" size="lg">
-				Mes Ontologies
-			</Button>
+			{#if $isAuthenticated}
+				<Button href="/terms" variant="primary" size="lg">
+					Mes Ontologies →
+				</Button>
+				<Button href="/profile" variant="outline" size="lg">
+					Mon Profil
+				</Button>
+			{:else}
+				<Button href="/register" variant="primary" size="lg">
+					Commencer Gratuitement →
+				</Button>
+				<Button href="/login" variant="outline" size="lg">
+					Se Connecter
+				</Button>
+			{/if}
 		</div>
+
+		{#if $isAuthenticated && $user}
+			<p class="text-sm text-gray-600 mb-8">
+				Bienvenue, <span class="font-semibold">{$user.first_name}</span>! 👋
+			</p>
+		{/if}
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
 			<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">

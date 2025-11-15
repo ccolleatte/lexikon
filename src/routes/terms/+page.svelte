@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$components/Button.svelte';
+	import NavBar from '$lib/components/NavBar.svelte';
 	import { onboarding } from '$lib/stores/onboarding';
 
 	// For Sprint 1, just show a placeholder with CTA to create first term
@@ -10,28 +11,7 @@
 	<title>Mes Ontologies - Lexikon</title>
 </svelte:head>
 
-<!-- App Header -->
-<div class="bg-white border-b border-gray-200">
-	<div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-		<a href="/" class="flex items-center gap-2 text-xl font-bold text-primary-600">
-			<div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-md flex items-center justify-center text-white">
-				📚
-			</div>
-			LEXIKON
-		</a>
-
-		<div class="flex items-center gap-4">
-			{#if hasOnboarded && $onboarding.profile}
-				<div class="text-sm text-gray-600">
-					{$onboarding.profile.firstName} {$onboarding.profile.lastName}
-				</div>
-			{/if}
-			<Button href="/terms/new" variant="primary" size="sm">
-				+ Nouveau terme
-			</Button>
-		</div>
-	</div>
-</div>
+<NavBar />
 
 <div class="min-h-screen bg-gray-50">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
