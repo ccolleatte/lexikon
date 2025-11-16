@@ -22,12 +22,17 @@ import os
 import enum
 
 # Database URL from environment
+# Use SQLite for development, PostgreSQL for production
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://lexikon:dev-secret@localhost:5432/lexikon"
+    "DATABASE_URL", "sqlite:///./lexikon.db"
 )
 
 # Create engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -171,7 +176,7 @@ class Term(Base):
     synonyms = Column(Text, nullable=True)  # JSON array
     formal_definition = Column(Text, nullable=True)
     citations = Column(Text, nullable=True)  # JSON array
-    metadata = Column(Text, nullable=True)  # JSON object
+    term_metadata = Column(Text, nullable=True)  # JSON object
 
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())

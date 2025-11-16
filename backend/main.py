@@ -5,7 +5,8 @@ FastAPI backend with in-memory database for development.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import onboarding, users, terms
+from api import onboarding, users, terms, auth
+from db.postgres import Base, engine
 
 # Create FastAPI app
 app = FastAPI(
@@ -17,16 +18,23 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite dev server
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"],  # Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Create database tables on startup
+@app.on_event("startup")
+def startup_event():
+    """Create database tables if they don't exist"""
+    Base.metadata.create_all(bind=engine)
+
 # Include routers
 app.include_router(onboarding.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(terms.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 
 @app.get("/")
