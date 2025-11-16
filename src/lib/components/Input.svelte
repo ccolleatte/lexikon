@@ -103,7 +103,7 @@
       {step}
       {pattern}
       {autocomplete}
-      bind:value
+      {value}
       on:input={handleInput}
       on:change={handleChange}
       on:focus={handleFocus}
