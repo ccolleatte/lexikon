@@ -12,6 +12,9 @@ env/
 *.swo
 *~
 
+# Claude Code
+.claude/settings.local.json
+
 # Python
 __pycache__/
 *.pyc
