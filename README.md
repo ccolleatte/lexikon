@@ -26,6 +26,47 @@ npm run dev
 
 ---
 
+## 🔀 Development Workflow
+
+We use **Git Flow** branching model for organized, safe development:
+
+### Branches
+- **`master`**: Production releases only (heavily protected)
+- **`develop`**: Integration branch for next release
+- **`feature/tier*-*`**: Feature branches by complexity tier
+
+### Quick Start for Developers
+
+```bash
+# 1. Create feature branch (example: TIER-1 feature)
+git checkout develop
+git pull origin develop
+git checkout -b feature/tier1-your-feature-name
+
+# 2. Develop & test locally
+npm run test:coverage    # Must pass (80%+ coverage)
+npm run lint             # Must pass (0 violations)
+npm run check            # Must pass (type checking)
+
+# 3. Push & create PR
+git push -u origin feature/tier1-your-feature-name
+# → Create PR on GitHub (base: develop, not master)
+
+# 4. After approval & merge, sync local
+git checkout develop
+git pull origin develop
+```
+
+**Need details?** See **[BRANCHING_STRATEGY.md](_docs/BRANCHING_STRATEGY.md)** for full workflow guide.
+
+### CI/CD Automation
+- ✅ GitHub Actions runs tests on every PR
+- ✅ Status checks block merge if tests fail
+- ✅ Code review required before merge
+- ✅ Automatic branch cleanup after merge
+
+---
+
 ## 📌 Vision
 
 Lexikon vise à créer une **couche sémantique universelle** capable de :

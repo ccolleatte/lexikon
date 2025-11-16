@@ -1,0 +1,13 @@
+# Default reviewers for all PRs
+* @ccolleatte
+
+# Backend Python files
+backend/ @ccolleatte
+
+# Frontend TypeScript/Svelte files
+src/ @ccolleatte
+
+# Configuration & infrastructure
+.github/ @ccolleatte
+package.json @ccolleatte
+tsconfig.json @ccolleatte

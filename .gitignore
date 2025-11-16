@@ -1,9 +1,17 @@
-# Environment
+# Environment & Secrets (CRITICAL - Never commit)
 .env
 .env.local
+.env.*.local
+.env.*.example
 .venv
 venv/
 env/
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.json
 
 # IDE
 .vscode/
@@ -42,10 +50,21 @@ ehthumbs.db
 # Logs
 logs/
 *.log
+debug.log
+error.log
+
+# Test & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+*.lcov
+test-results/
 
 # Temporary
 tmp/
 temp/
 *.tmp
 .svelte-kit/
-coverage/
+.turbo/
