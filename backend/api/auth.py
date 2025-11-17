@@ -7,6 +7,9 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 from typing import Optional
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 from db.postgres import get_db, User
 from auth.jwt import (
@@ -76,54 +79,68 @@ class ApiKeyResponse(BaseModel):
 @router.post("/register", status_code=201)
 async def register(request: RegisterRequest, db: Session = Depends(get_db)):
     """Register a new user account."""
+    try:
+        logger.info(f"Register: Starting for {request.email}")
 
-    # Check if email already exists
-    existing = db.query(User).filter(User.email == request.email).first()
-    if existing:
-        return ApiResponse(
-            success=False,
-            error={
-                "code": "EMAIL_EXISTS",
-                "message": "This email is already registered",
-                "details": {"email": request.email},
+        # Check if email already exists
+        existing = db.query(User).filter(User.email == request.email).first()
+        if existing:
+            logger.warning(f"Register: Email {request.email} already exists")
+            return ApiResponse(
+                success=False,
+                error={
+                    "code": "EMAIL_EXISTS",
+                    "message": "This email is already registered",
+                    "details": {"email": request.email},
+                },
+            )
+
+        logger.info(f"Register: Hashing password for {request.email}")
+        # Hash password
+        password_hash = hash_password(request.password)
+        logger.info(f"Register: Password hashed successfully")
+
+        # Create user
+        user = User(
+            id=str(uuid.uuid4()),
+            email=request.email,
+            password_hash=password_hash,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            language=request.language,
+            adoption_level="quick-project",
+            is_active=True,
+        )
+        logger.info(f"Register: User object created, saving to DB")
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"Register: User {request.email} saved to database")
+
+        # Generate tokens
+        logger.info(f"Register: Generating tokens")
+        tokens = create_token_pair(user.id, user.email)
+        logger.info(f"Register: Tokens generated: {list(tokens.keys())}")
+
+        response_data = LoginResponse(
+            **tokens,
+            user={
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "language": user.language,
+                "adoption_level": user.adoption_level,
             },
         )
+        logger.info(f"Register: Response data prepared")
 
-    # Hash password
-    password_hash = hash_password(request.password)
+        return ApiResponse(success=True, data=response_data.model_dump())
 
-    # Create user
-    user = User(
-        id=str(uuid.uuid4()),
-        email=request.email,
-        password_hash=password_hash,
-        first_name=request.first_name,
-        last_name=request.last_name,
-        language=request.language,
-        adoption_level="quick-project",
-        is_active=True,
-    )
-
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    # Generate tokens
-    tokens = create_token_pair(user.id, user.email)
-
-    response_data = LoginResponse(
-        **tokens,
-        user={
-            "id": user.id,
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "language": user.language,
-            "adoption_level": user.adoption_level,
-        },
-    )
-
-    return ApiResponse(success=True, data=response_data.model_dump())
+    except Exception as e:
+        logger.error(f"Register: Error - {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
 
 
 @router.post("/login")
