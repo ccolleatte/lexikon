@@ -162,7 +162,7 @@ class Term(Base):
     __tablename__ = "terms"
 
     id = Column(String, primary_key=True)
-    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=True)  # TODO: Make non-nullable in future versions
     name = Column(String, nullable=False, index=True)
     definition = Column(Text, nullable=False)
     domain = Column(String, nullable=True)
