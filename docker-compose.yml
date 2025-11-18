@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: lexikon
       POSTGRES_USER: lexikon
-      POSTGRES_PASSWORD: dev-secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -23,7 +23,7 @@ services:
     image: neo4j:5.14-community
     container_name: lexikon-neo4j
     environment:
-      NEO4J_AUTH: neo4j/dev-secret
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_apoc_export_file_enabled: "true"
       NEO4J_apoc_import_file_enabled: "true"
@@ -34,7 +34,7 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p dev-secret 'RETURN 1'"]
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD} 'RETURN 1'"]
       interval: 10s
       timeout: 5s
       retries: 5
