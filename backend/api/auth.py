@@ -143,7 +143,56 @@ class ApiKeyResponse(BaseModel):
 @router.post("/register", status_code=201)
 @limiter.limit(RATE_LIMIT_AUTH)
 async def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    """Register a new user account."""
+    """
+    Register a new user account.
+
+    Creates a new user with email/password authentication and generates JWT tokens.
+
+    Args:
+        request: Registration data containing:
+            - email: Valid email address
+            - password: Strong password (8+ chars, uppercase, lowercase, digit, special char)
+            - first_name: First name (2-100 chars, letters + diacritics only)
+            - last_name: Last name (2-100 chars, letters + diacritics only)
+            - language: Preferred language (default: "fr", options: fr/en/es/de/it)
+
+    Returns:
+        201 Created: {
+            "success": true,
+            "data": {
+                "access_token": "jwt...",
+                "refresh_token": "jwt...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": {
+                    "id": "uuid",
+                    "email": "user@example.com",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "language": "fr",
+                    "adoption_level": "quick-project"
+                }
+            }
+        }
+
+    Raises:
+        422 Unprocessable Entity: Validation error
+        400 Bad Request: Email already exists
+        429 Too Many Requests: Rate limit exceeded (5 requests/minute)
+
+    Rate Limit: 5 requests per minute per IP
+
+    Examples:
+        curl -X POST http://localhost:8000/api/auth/register \\
+            -H "Content-Type: application/json" \\
+            -d '{
+                "email": "user@example.com",
+                "password": "SecurePass123!",
+                "first_name": "John",
+                "last_name": "Doe",
+                "language": "en"
+            }'
+    """
     try:
         logger.info(f"Register: Starting for {request.email}")
 
@@ -211,7 +260,52 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login")
 @limiter.limit(RATE_LIMIT_AUTH)
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
-    """Login with email and password."""
+    """
+    Authenticate user with email and password.
+
+    Returns JWT tokens for authenticated API access.
+
+    Args:
+        request: Login credentials containing:
+            - email: Registered email address
+            - password: User password
+
+    Returns:
+        200 OK: {
+            "success": true,
+            "data": {
+                "access_token": "jwt...",
+                "refresh_token": "jwt...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": { "id", "email", "first_name", "last_name", "language", "adoption_level" }
+            }
+        }
+
+        200 OK (on failure): {
+            "success": false,
+            "error": {
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid email or password"
+            }
+        }
+
+    Raises:
+        422 Unprocessable Entity: Validation error
+        429 Too Many Requests: Rate limit exceeded (5 requests/minute)
+
+    Rate Limit: 5 requests per minute per IP
+
+    Note: Returns 200 even on authentication failure (no user enumeration).
+
+    Examples:
+        curl -X POST http://localhost:8000/api/auth/login \\
+            -H "Content-Type: application/json" \\
+            -d '{
+                "email": "user@example.com",
+                "password": "SecurePass123!"
+            }'
+    """
 
     # Find user
     user = db.query(User).filter(User.email == request.email).first()
