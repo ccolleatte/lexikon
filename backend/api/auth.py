@@ -3,11 +3,17 @@ Authentication API endpoints.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 from typing import Optional
 import uuid
 import logging
+
+from validators.input_validators import (
+    validate_password,
+    validate_email_format,
+    validate_name,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +42,45 @@ class RegisterRequest(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=100)
     language: str = Field(default="fr", pattern="^(fr|en|es|de|it)$")
 
+    @validator("password", pre=True)
+    def validate_register_password(cls, v):
+        """Validate password strength."""
+        if not v:
+            raise ValueError("Password cannot be empty")
+        return validate_password(v)
+
+    @validator("first_name", "last_name", pre=True)
+    def validate_register_names(cls, v):
+        """Validate and normalize names."""
+        if not v:
+            raise ValueError("Name cannot be empty")
+        return validate_name(v, min_length=2, max_length=100)
+
+    @validator("email", pre=True)
+    def validate_register_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    @validator("email", pre=True)
+    def validate_login_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
+
+    @validator("password", pre=True)
+    def validate_login_password(cls, v):
+        """Validate password is not empty."""
+        if not v:
+            raise ValueError("Password cannot be empty")
+        return v
 
 
 class LoginResponse(BaseModel):
@@ -58,11 +99,33 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
+    @validator("current_password", pre=True)
+    def validate_current_password(cls, v):
+        """Validate current password is not empty."""
+        if not v:
+            raise ValueError("Current password cannot be empty")
+        return v
+
+    @validator("new_password", pre=True)
+    def validate_new_password(cls, v):
+        """Validate new password strength."""
+        if not v:
+            raise ValueError("New password cannot be empty")
+        return validate_password(v)
+
 
 class CreateApiKeyRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     scopes: str = Field(default="read", pattern="^(read|write|admin|read,write)$")
     expires_in_days: Optional[int] = Field(None, ge=1, le=365)
+
+    @validator("name", pre=True)
+    def validate_api_key_name(cls, v):
+        """Validate and sanitize API key name."""
+        if not v:
+            raise ValueError("API key name cannot be empty")
+        from validators.input_validators import validate_string_input
+        return validate_string_input(v, min_length=1, max_length=100, field_name="API key name")
 
 
 class ApiKeyResponse(BaseModel):

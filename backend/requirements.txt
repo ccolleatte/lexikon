@@ -30,3 +30,6 @@ httpx==0.25.1
 # Import/Export
 rdflib==7.0.0
 pandas==2.1.3
+
+# Input Validation & Sanitization
+bleach==6.1.0
