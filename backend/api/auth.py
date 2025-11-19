@@ -22,6 +22,7 @@ from auth.jwt import (
 from auth.middleware import get_current_user, AuthenticationError
 from auth.api_keys import create_api_key, list_api_keys, revoke_api_key
 from models import ApiResponse
+from middleware.rate_limit import limiter, RATE_LIMIT_AUTH, RATE_LIMIT_API
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -77,6 +78,7 @@ class ApiKeyResponse(BaseModel):
 
 # Endpoints
 @router.post("/register", status_code=201)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def register(request: RegisterRequest, db: Session = Depends(get_db)):
     """Register a new user account."""
     try:
@@ -144,6 +146,7 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """Login with email and password."""
 

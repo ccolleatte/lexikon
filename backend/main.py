@@ -4,10 +4,14 @@ FastAPI backend with in-memory database for development.
 """
 
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+
 from api import onboarding, users, terms, auth
 from db.postgres import Base, engine
+from middleware.rate_limit import limiter
 
 # Create FastAPI app
 app = FastAPI(
@@ -15,6 +19,10 @@ app = FastAPI(
     description="Generic Lexical Ontology Service",
     version="0.1.0",
 )
+
+# Attach rate limiter to app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware - Load origins from environment variable
 cors_origins = os.getenv(
