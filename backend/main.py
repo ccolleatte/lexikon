@@ -12,6 +12,7 @@ from slowapi import _rate_limit_exceeded_handler
 from api import onboarding, users, terms, auth
 from db.postgres import Base, engine
 from middleware.rate_limit import limiter
+from middleware.error_handler import setup_error_handlers
 
 # Create FastAPI app
 app = FastAPI(
@@ -19,6 +20,9 @@ app = FastAPI(
     description="Generic Lexical Ontology Service",
     version="0.1.0",
 )
+
+# Setup error handlers (must be before route registration)
+setup_error_handlers(app)
 
 # Attach rate limiter to app
 app.state.limiter = limiter
