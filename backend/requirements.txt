@@ -39,3 +39,6 @@ redis==5.0.1
 
 # HTTP Client
 httpx==0.25.1
+
+# Logging
+python-json-logger==2.0.7
