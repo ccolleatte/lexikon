@@ -39,6 +39,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: lexikon-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Uncomment when backend is ready for containerization
   # backend:
   #   build:
@@ -84,4 +98,6 @@ volumes:
   neo4j_data:
     driver: local
   neo4j_logs:
+    driver: local
+  redis_data:
     driver: local
