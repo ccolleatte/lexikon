@@ -36,3 +36,6 @@ bleach==6.1.0
 
 # Caching
 redis==5.0.1
+
+# HTTP Client
+httpx==0.25.1
