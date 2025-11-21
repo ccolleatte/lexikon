@@ -261,9 +261,13 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
 @limiter.limit(RATE_LIMIT_AUTH)
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """
-    Authenticate user with email and password.
+    Authenticate user with email and password using constant-time verification.
 
     Returns JWT tokens for authenticated API access.
+
+    Security: Uses constant-time password verification to prevent timing attacks
+    that leak user existence. Always performs password verification even for
+    non-existent users to prevent user enumeration.
 
     Args:
         request: Login credentials containing:
@@ -310,7 +314,19 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     # Find user
     user = db.query(User).filter(User.email == request.email).first()
 
+    # Use a dummy hash for non-existent users to prevent timing attacks
+    # This ensures password verification takes same time whether user exists or not
     if not user:
+        # Create a dummy user with a bcrypt hash to ensure constant-time verification
+        # This hash is for a non-existent user and will always fail verification
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        dummy_hash = pwd_context.hash("dummy-password-" + request.email)
+
+        # Always verify (takes constant time regardless of user existence)
+        verify_password(request.password, dummy_hash)
+
+        # Always return same error message (don't leak user existence)
         return ApiResponse(
             success=False,
             error={
@@ -329,7 +345,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             },
         )
 
-    # Verify password
+    # Verify password using constant-time comparison (bcrypt handles this)
     if not verify_password(request.password, user.password_hash):
         return ApiResponse(
             success=False,

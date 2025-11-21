@@ -1,30 +1,49 @@
 """
 API Key management for production-api tier users.
+Uses HMAC-SHA256 for secure API key hashing.
 """
 
 import secrets
 import hashlib
+import hmac
+import os
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
 from db.postgres import ApiKey
 
+# Secret key for HMAC - should be set in environment in production
+# In production, use: export API_KEY_SECRET=$(openssl rand -hex 32)
+API_KEY_SECRET = os.getenv(
+    "API_KEY_SECRET",
+    "dev-secret-change-in-production-set-api-key-secret-env-var"
+).encode()
+
 
 def generate_api_key() -> Tuple[str, str]:
     """
     Generate a new API key and its hash.
 
+    Uses HMAC-SHA256 for secure hashing with a secret key.
+    The API_KEY_SECRET should be set in environment (API_KEY_SECRET env var)
+    in production.
+
     Returns:
         Tuple of (plain_key, key_hash)
         plain_key: The actual key to give to user (only shown once)
-        key_hash: Hashed version to store in database
+        key_hash: HMAC-SHA256 hashed version to store in database
     """
     # Generate random key (32 bytes = 64 hex characters)
     plain_key = "lxk_" + secrets.token_urlsafe(32)
 
-    # Hash the key for storage
-    key_hash = hashlib.sha256(plain_key.encode()).hexdigest()
+    # Hash the key using HMAC-SHA256 for protection against rainbow tables
+    # and GPU brute-force attacks (uses a secret key not derivable from DB)
+    key_hash = hmac.new(
+        API_KEY_SECRET,
+        plain_key.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
     return plain_key, key_hash
 
@@ -87,6 +106,8 @@ def verify_api_key(plain_key: str, db: Session) -> Optional[Tuple[str, str]]:
     """
     Verify an API key and return associated user ID and scopes.
 
+    Uses HMAC-SHA256 to compute the key hash for comparison.
+
     Args:
         plain_key: The API key to verify
         db: Database session
@@ -94,8 +115,12 @@ def verify_api_key(plain_key: str, db: Session) -> Optional[Tuple[str, str]]:
     Returns:
         Tuple of (user_id, scopes) if valid, None otherwise
     """
-    # Hash the provided key
-    key_hash = hashlib.sha256(plain_key.encode()).hexdigest()
+    # Hash the provided key using HMAC-SHA256 (same as generation)
+    key_hash = hmac.new(
+        API_KEY_SECRET,
+        plain_key.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
     # Find API key in database
     api_key = db.query(ApiKey).filter(ApiKey.key_hash == key_hash).first()

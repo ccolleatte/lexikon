@@ -10,7 +10,6 @@ from typing import Optional, Any, Dict, List, Callable
 from contextlib import contextmanager
 from functools import wraps
 import hashlib
-import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +19,21 @@ class RedisClient:
     High-level Redis client wrapper.
 
     Features:
-    - Automatic serialization/deserialization (JSON + pickle)
-    - TTL management
+    - Automatic serialization/deserialization (JSON only, no pickle)
+    - TTL management with min/max validation
     - Key prefix namespacing
     - Connection pooling
     - Health checks
     - Cache invalidation
     """
+
+    # TTL validation limits
+    MIN_TTL_SECONDS = 1  # Minimum 1 second
+    MAX_TTL_SECONDS = 86400  # Maximum 24 hours
+
+    # Memory protection limits
+    MAX_VALUE_SIZE_BYTES = 10 * 1024 * 1024  # Maximum 10MB per value
+    MAX_TOTAL_MEMORY_MB = 100  # Maximum 100MB total cache usage
 
     def __init__(
         self,
@@ -83,34 +90,96 @@ class RedisClient:
         return f"{self.prefix}{key}"
 
     def _serialize(self, value: Any) -> bytes:
-        """Serialize value for storage."""
-        try:
-            # Try JSON first (human-readable, smaller)
-            if isinstance(value, (dict, list, str, int, float, bool, type(None))):
-                return json.dumps(value).encode("utf-8")
-        except (TypeError, ValueError):
-            pass
+        """Serialize value for storage using JSON only (no pickle for security)."""
+        # Only allow JSON-serializable types (prevents RCE via pickle)
+        if not isinstance(value, (dict, list, str, int, float, bool, type(None))):
+            raise ValueError(
+                f"Cannot cache non-JSON-serializable type: {type(value).__name__}. "
+                f"Please convert to dict/list/str/int/float/bool/None before caching."
+            )
 
-        # Fall back to pickle for complex objects
-        return pickle.dumps(value)
+        try:
+            return json.dumps(value).encode("utf-8")
+        except (TypeError, ValueError) as e:
+            logger.error(f"Failed to serialize cache value: {e}")
+            raise
 
     def _deserialize(self, data: bytes) -> Any:
-        """Deserialize value from storage."""
+        """Deserialize value from storage using JSON only."""
         if data is None:
             return None
 
-        # Try JSON first
         try:
             return json.loads(data.decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            pass
-
-        # Fall back to pickle
-        try:
-            return pickle.loads(data)
-        except (pickle.UnpicklingError, EOFError):
-            logger.error(f"Failed to deserialize cached value")
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.error(f"Failed to deserialize cached value: {e}")
             return None
+
+    def _validate_ttl(self, ttl: int) -> int:
+        """
+        Validate and enforce TTL bounds.
+
+        Args:
+            ttl: TTL in seconds
+
+        Returns:
+            Validated TTL value (clamped to min/max bounds)
+
+        Raises:
+            ValueError: If TTL is outside acceptable range
+        """
+        if ttl < self.MIN_TTL_SECONDS:
+            raise ValueError(
+                f"TTL must be at least {self.MIN_TTL_SECONDS} second(s), "
+                f"got {ttl}s. Set to None or use default_ttl_seconds to avoid this."
+            )
+
+        if ttl > self.MAX_TTL_SECONDS:
+            # Log warning but clamp to max instead of failing
+            logger.warning(
+                f"TTL {ttl}s exceeds maximum {self.MAX_TTL_SECONDS}s (24h), "
+                f"clamping to maximum."
+            )
+            return self.MAX_TTL_SECONDS
+
+        return ttl
+
+    def _validate_value_size(self, value_bytes: bytes) -> None:
+        """
+        Validate that value size doesn't exceed limits.
+
+        Args:
+            value_bytes: Serialized value
+
+        Raises:
+            ValueError: If value exceeds maximum size
+        """
+        size_mb = len(value_bytes) / (1024 * 1024)
+
+        if len(value_bytes) > self.MAX_VALUE_SIZE_BYTES:
+            raise ValueError(
+                f"Cached value size {size_mb:.2f}MB exceeds maximum {self.MAX_VALUE_SIZE_BYTES / (1024 * 1024):.0f}MB. "
+                f"Consider compressing or splitting the data."
+            )
+
+    def _check_memory_usage(self) -> None:
+        """
+        Check current cache memory usage against limits.
+        Logs warning if exceeding threshold.
+        """
+        try:
+            info = self.client.info()
+            used_memory_mb = info.get("used_memory", 0) / (1024 * 1024)
+
+            if used_memory_mb > self.MAX_TOTAL_MEMORY_MB:
+                logger.warning(
+                    f"Cache memory usage {used_memory_mb:.2f}MB exceeds "
+                    f"maximum {self.MAX_TOTAL_MEMORY_MB}MB. "
+                    f"Consider clearing old entries or increasing max memory."
+                )
+        except redis.RedisError:
+            # Silently fail memory checks to avoid blocking operations
+            pass
 
     def get(self, key: str) -> Optional[Any]:
         """
@@ -142,25 +211,36 @@ class RedisClient:
         ttl_seconds: Optional[int] = None,
     ) -> bool:
         """
-        Set value in cache.
+        Set value in cache with TTL and memory validation.
 
         Args:
             key: Cache key (without prefix)
             value: Value to cache
             ttl_seconds: Time to live in seconds (uses default if None)
+                        Must be between MIN_TTL_SECONDS and MAX_TTL_SECONDS
 
         Returns:
-            True if successful
+            True if successful, False if validation fails or error occurs
         """
         try:
             full_key = self._make_key(key)
             ttl = ttl_seconds or self.default_ttl_seconds
+
+            # Validate TTL (min 1 second, max 24 hours)
+            ttl = self._validate_ttl(ttl)
+
             serialized = self._serialize(value)
 
+            # Validate value size (max 10MB per value)
+            self._validate_value_size(serialized)
+
+            # Check total memory usage (warn if exceeding 100MB)
+            self._check_memory_usage()
+
             self.client.setex(full_key, ttl, serialized)
-            logger.debug(f"Cache set: {key} (TTL: {ttl}s)")
+            logger.debug(f"Cache set: {key} (size: {len(serialized) / 1024:.1f}KB, TTL: {ttl}s)")
             return True
-        except redis.RedisError as e:
+        except (redis.RedisError, ValueError) as e:
             logger.error(f"Error setting cache key {key}: {e}")
             return False
 
@@ -186,7 +266,7 @@ class RedisClient:
 
     def delete_pattern(self, pattern: str) -> int:
         """
-        Delete all keys matching a pattern.
+        Delete all keys matching a pattern using SCAN (non-blocking).
 
         Args:
             pattern: Pattern with wildcards (e.g., "user:123:*")
@@ -196,11 +276,17 @@ class RedisClient:
         """
         try:
             full_pattern = self._make_key(pattern)
-            keys = self.client.keys(full_pattern)
-            if not keys:
-                return 0
+            deleted = 0
+            cursor = 0
 
-            deleted = self.client.delete(*keys)
+            # Use SCAN instead of KEYS (non-blocking operation)
+            while True:
+                cursor, keys = self.client.scan(cursor, match=full_pattern, count=100)
+                if keys:
+                    deleted += self.client.delete(*keys)
+                if cursor == 0:
+                    break
+
             logger.debug(f"Cache invalidated {deleted} keys matching {pattern}")
             return deleted
         except redis.RedisError as e:
@@ -217,18 +303,24 @@ class RedisClient:
 
     def clear(self) -> int:
         """
-        Clear all cached entries with our prefix.
+        Clear all cached entries with our prefix using SCAN (non-blocking).
 
         Returns:
             Number of keys deleted
         """
         try:
             pattern = f"{self.prefix}*"
-            keys = self.client.keys(pattern)
-            if not keys:
-                return 0
+            deleted = 0
+            cursor = 0
 
-            deleted = self.client.delete(*keys)
+            # Use SCAN instead of KEYS (non-blocking operation)
+            while True:
+                cursor, keys = self.client.scan(cursor, match=pattern, count=100)
+                if keys:
+                    deleted += self.client.delete(*keys)
+                if cursor == 0:
+                    break
+
             logger.info(f"Cache cleared: {deleted} entries removed")
             return deleted
         except redis.RedisError as e:
@@ -295,28 +387,44 @@ class RedisClient:
         ttl_seconds: Optional[int] = None,
     ) -> bool:
         """
-        Set multiple values in cache.
+        Set multiple values in cache with TTL and memory validation.
 
         Args:
             items: Dictionary of key -> value pairs
-            ttl_seconds: TTL for all values
+            ttl_seconds: TTL for all values (validated for bounds)
 
         Returns:
-            True if successful
+            True if successful, False if validation fails or error occurs
         """
         try:
             ttl = ttl_seconds or self.default_ttl_seconds
 
-            pipeline = self.client.pipeline()
+            # Validate TTL (min 1 second, max 24 hours)
+            ttl = self._validate_ttl(ttl)
+
+            # Pre-validate all values before pipeline execution
+            total_size = 0
+            serialized_items = {}
             for key, value in items.items():
-                full_key = self._make_key(key)
                 serialized = self._serialize(value)
+                # Validate each value size (max 10MB per value)
+                self._validate_value_size(serialized)
+                total_size += len(serialized)
+                serialized_items[key] = serialized
+
+            # Check total memory usage
+            self._check_memory_usage()
+
+            # Execute pipeline with pre-validated data
+            pipeline = self.client.pipeline()
+            for key, serialized in serialized_items.items():
+                full_key = self._make_key(key)
                 pipeline.setex(full_key, ttl, serialized)
 
             pipeline.execute()
-            logger.debug(f"Cache mset: {len(items)} keys (TTL: {ttl}s)")
+            logger.debug(f"Cache mset: {len(items)} keys (total: {total_size / 1024:.1f}KB, TTL: {ttl}s)")
             return True
-        except redis.RedisError as e:
+        except (redis.RedisError, ValueError) as e:
             logger.error(f"Error in mset: {e}")
             return False
 
@@ -389,7 +497,7 @@ def cache(
     key_builder: Optional[Callable] = None,
 ):
     """
-    Decorator to cache function results.
+    Decorator to cache function results with secure key generation.
 
     Usage:
         @cache(key_prefix="user", ttl_seconds=3600)
@@ -399,7 +507,7 @@ def cache(
         # Customize cache key
         @cache(
             key_prefix="term_search",
-            key_builder=lambda kwargs: f"{kwargs['term_name']}:{kwargs['user_id']}"
+            key_builder=lambda kwargs: (kwargs['term_name'], kwargs['user_id'])
         )
         def search_terms(term_name: str, user_id: str):
             ...
@@ -407,22 +515,38 @@ def cache(
     Args:
         key_prefix: Prefix for cache key
         ttl_seconds: Time to live in seconds
-        key_builder: Optional function to build cache key from args/kwargs
+        key_builder: Optional function to build cache key from args/kwargs.
+                     Should return tuple of parameters to be hashed for security.
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             redis_client = get_redis_client()
 
-            # Build cache key
+            # Build cache key with secure hashing
             if key_builder:
-                cache_key = key_builder(kwargs)
+                # key_builder should return tuple/list of parameters to hash
+                params = key_builder(kwargs)
+                if not isinstance(params, (tuple, list)):
+                    params = (params,)
+                # Hash parameters to prevent cache key injection
+                params_str = ":".join(str(p) for p in params)
+                params_hash = hashlib.sha256(params_str.encode()).hexdigest()[:16]
+                cache_key = f"{key_prefix}:{params_hash}"
             else:
-                # Default: use function name and first argument
-                arg_str = "_".join(str(arg) for arg in args[:1]) if args else ""
-                kwarg_str = "_".join(f"{k}={v}" for k, v in kwargs.items())
-                key_part = f"{arg_str}_{kwarg_str}".strip("_")
-                cache_key = f"{key_prefix}:{key_part}" if key_part else key_prefix
+                # Default: hash first arg and all kwargs for security
+                key_parts = []
+                if args:
+                    key_parts.append(str(args[0]))
+                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
+
+                # Hash to prevent injection attacks
+                params_str = "|".join(key_parts) if key_parts else ""
+                if params_str:
+                    params_hash = hashlib.sha256(params_str.encode()).hexdigest()[:16]
+                    cache_key = f"{key_prefix}:{params_hash}"
+                else:
+                    cache_key = key_prefix
 
             # Try cache
             cached = redis_client.get(cache_key)
