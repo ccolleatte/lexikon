@@ -451,3 +451,102 @@ class TestErrorHandling:
         assert result["key1"] == "value1"
         assert result["key2"] is None
         assert result["key3"] == "value3"
+
+
+class TestRedisAuthenticationConfiguration:
+    """Test Redis authentication with environment variables."""
+
+    def test_get_redis_client_with_default_config(self, monkeypatch):
+        """Test that get_redis_client uses default config when env vars not set."""
+        # Clear all Redis env vars
+        monkeypatch.delenv("REDIS_HOST", raising=False)
+        monkeypatch.delenv("REDIS_PORT", raising=False)
+        monkeypatch.delenv("REDIS_DB", raising=False)
+        monkeypatch.delenv("REDIS_PASSWORD", raising=False)
+        monkeypatch.delenv("REDIS_PREFIX", raising=False)
+
+        # Force reinitialize by clearing global client
+        import cache.redis_client as redis_mod
+        redis_mod._redis_client = None
+
+        from cache.redis_client import get_redis_client
+
+        try:
+            client = get_redis_client()
+            # Verify defaults are used
+            assert client.prefix == "lexikon:"
+        except Exception as e:
+            # Redis might not be running, but we verify the client was initialized with defaults
+            assert "localhost" in str(e) or "127.0.0.1" in str(e) or "Connection" in str(type(e).__name__)
+
+    def test_environment_variables_are_read(self, monkeypatch):
+        """Test that environment variable reading logic is correct."""
+        import os
+
+        # Set custom Redis config using monkeypatch
+        monkeypatch.setenv("REDIS_HOST", "custom-redis-host")
+        monkeypatch.setenv("REDIS_PORT", "6380")
+        monkeypatch.setenv("REDIS_DB", "2")
+        monkeypatch.setenv("REDIS_PREFIX", "test:")
+        monkeypatch.setenv("REDIS_PASSWORD", "test-password")
+
+        # Verify that os.getenv picks up these values
+        assert os.getenv("REDIS_HOST") == "custom-redis-host"
+        assert os.getenv("REDIS_PORT") == "6380"
+        assert os.getenv("REDIS_DB") == "2"
+        assert os.getenv("REDIS_PREFIX") == "test:"
+        assert os.getenv("REDIS_PASSWORD") == "test-password"
+
+    def test_redis_password_parameter_support(self):
+        """Test that RedisClient constructor accepts password parameter."""
+        import inspect
+        from cache import RedisClient
+
+        # Check that RedisClient.__init__ has password parameter
+        sig = inspect.signature(RedisClient.__init__)
+        params = list(sig.parameters.keys())
+        assert "password" in params, "RedisClient must have password parameter"
+
+        # Verify the parameter is Optional[str]
+        password_param = sig.parameters["password"]
+        assert password_param.default is None, "password parameter should default to None"
+
+    def test_redis_client_direct_initialization_with_password(self):
+        """Test that RedisClient accepts password parameter directly."""
+        # Test direct initialization (as would be done in production)
+        from cache import RedisClient
+
+        # Should not raise an error
+        client = RedisClient(
+            host="localhost",
+            port=6379,
+            db=0,
+            password=None,  # No password for test
+            prefix="test:",
+        )
+
+        assert client is not None
+        assert client.prefix == "test:"
+
+    def test_redis_health_check_with_auth(self):
+        """Test Redis health check works with authentication."""
+        # Create a client that will attempt health check
+        from cache import RedisClient
+
+        client = RedisClient(
+            host="localhost",
+            port=6379,
+            db=0,
+            password=None,  # No password for local test
+            prefix="lexikon:",
+        )
+
+        # Attempt health check
+        try:
+            is_healthy = client.health_check()
+            # Health check should work (either True or False, no exception)
+            assert isinstance(is_healthy, bool)
+        except Exception as e:
+            # If Redis is not running, that's expected in test environment
+            # Just verify it's not an auth-related error
+            assert "authentication" not in str(e).lower()

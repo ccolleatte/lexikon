@@ -6,6 +6,7 @@ Provides high-level caching operations with automatic serialization and TTL mana
 import redis
 import json
 import logging
+import os
 from typing import Optional, Any, Dict, List, Callable
 from contextlib import contextmanager
 from functools import wraps
@@ -484,10 +485,42 @@ _redis_client: Optional[RedisClient] = None
 
 
 def get_redis_client() -> RedisClient:
-    """Get or create global Redis client."""
+    """
+    Get or create global Redis client with environment variable configuration.
+
+    Environment Variables:
+    - REDIS_HOST: Redis server hostname (default: localhost)
+    - REDIS_PORT: Redis server port (default: 6379)
+    - REDIS_DB: Redis database number (default: 0)
+    - REDIS_PASSWORD: Redis password for authentication (optional)
+    - REDIS_PREFIX: Key prefix for all cache entries (default: lexikon:)
+
+    Example:
+        export REDIS_HOST=redis.example.com
+        export REDIS_PORT=6379
+        export REDIS_PASSWORD=your-secure-password
+        python app.py
+    """
     global _redis_client
     if _redis_client is None:
-        _redis_client = RedisClient()
+        redis_host = os.getenv("REDIS_HOST", "localhost")
+        redis_port = int(os.getenv("REDIS_PORT", 6379))
+        redis_db = int(os.getenv("REDIS_DB", 0))
+        redis_password = os.getenv("REDIS_PASSWORD")
+        redis_prefix = os.getenv("REDIS_PREFIX", "lexikon:")
+
+        _redis_client = RedisClient(
+            host=redis_host,
+            port=redis_port,
+            db=redis_db,
+            password=redis_password,
+            prefix=redis_prefix,
+        )
+
+        logger.info(
+            f"Redis client initialized: {redis_host}:{redis_port}/db{redis_db}"
+            + (" (password-protected)" if redis_password else " (no password)")
+        )
     return _redis_client
 
 
