@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 .env.*.example
+.env.prod
+.env.production
+*.env.prod
 .venv
 venv/
 env/

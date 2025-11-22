@@ -17,6 +17,7 @@ NC='\033[0m'
 log_ok() { echo -e "${GREEN}✓${NC} $1"; }
 log_fail() { echo -e "${RED}✗${NC} $1"; }
 log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
+log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 
 check_container() {
     local name=$1

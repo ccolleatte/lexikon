@@ -94,8 +94,27 @@ pull_latest_code() {
     log_info "Pulling latest code from GitHub..."
 
     cd "$REPO_DIR"
+
+    # Vérifier s'il y a des modifications non commitées
+    if ! git diff-index --quiet HEAD --; then
+        log_warning "Uncommitted changes detected. Stashing..."
+        STASH_NAME="Auto-stash before deploy $(date +%Y%m%d_%H%M%S)"
+        git stash save "$STASH_NAME"
+        log_info "Changes stashed as: $STASH_NAME"
+        log_info "To restore: git stash apply"
+    fi
+
     git fetch origin
-    git reset --hard origin/master
+
+    # Tentative de merge fast-forward uniquement (pas de reset destructif)
+    if ! git merge origin/master --ff-only; then
+        log_error "Fast-forward merge failed. Manual intervention needed."
+        log_error "Possible causes:"
+        log_error "  - Local commits ahead of remote"
+        log_error "  - Conflicting changes"
+        log_info "Run 'git status' to investigate"
+        exit 1
+    fi
 
     log_success "Code updated"
 }
