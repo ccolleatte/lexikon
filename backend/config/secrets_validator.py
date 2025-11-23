@@ -81,7 +81,7 @@ def validate_secrets(strict: bool = True) -> None:
         ("JWT_SECRET", True, "JWT signing secret"),
         ("API_KEY_SECRET", True, "API key HMAC secret"),
         ("DATABASE_URL", True, "Database connection string"),
-        ("NEO4J_PASSWORD", True, "Neo4j authentication password"),
+        ("NEO4J_PASSWORD", False, "Neo4j authentication password (optional - deferred)"),
         ("REDIS_PASSWORD", False, "Redis password (optional)"),
     ]
 
