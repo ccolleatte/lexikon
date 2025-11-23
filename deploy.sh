@@ -148,7 +148,7 @@ build_images() {
     log_info "Building Docker images..."
 
     cd "$REPO_DIR"
-    docker-compose -f docker-compose.prod.yml build --no-cache backend
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache backend
 
     log_success "Docker images built"
 }
@@ -183,7 +183,7 @@ start_services() {
     log_info "Starting services..."
 
     cd "$REPO_DIR"
-    docker-compose -f docker-compose.prod.yml up -d
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
     log_success "Services started"
 }
@@ -213,7 +213,7 @@ verify_deployment() {
 
     # Check if all containers are running
     log_info "Checking container status..."
-    docker-compose -f "$REPO_DIR/docker-compose.prod.yml" ps
+    docker-compose -f "$REPO_DIR/docker-compose.prod.yml" --env-file .env.prod ps
 
     # Test API endpoint
     log_info "Testing API endpoint..."
@@ -226,7 +226,7 @@ verify_deployment() {
 
     # Check logs for errors
     log_info "Checking logs for errors..."
-    if docker-compose -f "$REPO_DIR/docker-compose.prod.yml" logs | grep -i error | head -5; then
+    if docker-compose -f "$REPO_DIR/docker-compose.prod.yml" --env-file .env.prod logs | grep -i error | head -5; then
         log_warning "Some errors found in logs (may be harmless)"
     fi
 

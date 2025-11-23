@@ -67,7 +67,7 @@ main() {
     # Stop services
     log_info "Stopping services..."
     cd "$REPO_DIR"
-    docker-compose -f docker-compose.prod.yml down
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod down
     log_success "Services stopped"
     echo
 
@@ -106,7 +106,7 @@ main() {
 
     # Start services
     log_info "Starting services..."
-    docker-compose -f docker-compose.prod.yml up -d
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
     sleep 10
 
     # Wait for health

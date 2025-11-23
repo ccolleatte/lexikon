@@ -38,7 +38,7 @@ services:
       - redis_data:/data
     command: >
       redis-server
-      --requirepass ${REDIS_PASSWORD}
+      --requirepass ${REDIS_PASSWORD:-redis_default_password}
       --appendonly yes
       --loglevel warning
       --maxmemory 512mb
@@ -98,6 +98,7 @@ services:
 
     ports:
       - "127.0.0.1:8000:8000"  # Only accessible locally (nginx handles external)
+
 
     depends_on:
       postgres:

@@ -121,7 +121,7 @@ main() {
 
     # Docker status
     echo "Docker Compose status:"
-    docker-compose -f docker-compose.prod.yml ps
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod ps
     echo
 
     # Summary
