@@ -131,6 +131,7 @@ services:
       - "8443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./.svelte-kit/output/client:/usr/share/nginx/html/client:ro
       - ./ssl:/etc/nginx/ssl:ro
       - ./ssl/dhparam.pem:/etc/nginx/ssl/dhparam.pem:ro
       - ./certbot/conf:/etc/letsencrypt:ro

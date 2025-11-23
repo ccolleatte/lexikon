@@ -44,6 +44,7 @@
     "vitest": "^1.0.4"
   },
   "dependencies": {
+    "@sveltejs/adapter-static": "^3.0.10",
     "lucide-svelte": "^0.294.0"
   }
 }
