@@ -160,7 +160,7 @@ run_tests() {
     docker run --rm \
         -v "$REPO_DIR/backend":/app \
         --entrypoint pytest \
-        lexikon-backend:latest \
+        lexikon_backend:latest \
         tests/ -v --tb=short
 
     log_success "All tests passed"
