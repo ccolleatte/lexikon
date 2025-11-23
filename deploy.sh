@@ -154,14 +154,27 @@ build_images() {
 }
 
 run_tests() {
-    log_info "Running tests..."
+    log_info "Running backend tests..."
 
-    cd "$REPO_DIR/backend"
-    # Tests will run when services start via healthcheck
-    # Docker image build already validated dependencies
-    log_info "Tests will run via service healthchecks"
+    cd "$REPO_DIR"
 
-    log_success "Tests skipped (will validate via healthcheck)"
+    # Start postgres & redis for tests
+    log_info "Starting test databases..."
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d postgres redis
+
+    sleep 3
+
+    # Run pytest via docker-compose
+    log_info "Executing pytest suite..."
+    if docker-compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend \
+        pytest -v --tb=short backend/tests/ 2>&1 | tee /tmp/pytest.log; then
+        log_success "Backend tests PASSED ✓"
+        return 0
+    else
+        log_error "Backend tests FAILED - aborting deployment"
+        log_error "See /tmp/pytest.log for details"
+        return 1
+    fi
 }
 
 setup_ssl() {
