@@ -90,6 +90,31 @@ create_backup() {
     echo "$BACKUP_PATH" > "$BACKUP_DIR/latest_backup"
 }
 
+cleanup_old_backups() {
+    log_info "Cleaning up backups older than 7 days..."
+
+    if [ ! -d "$BACKUP_DIR" ]; then
+        log_warning "Backup directory does not exist"
+        return 0
+    fi
+
+    # Find and delete directories older than 7 days
+    DELETED_COUNT=0
+    while IFS= read -r backup_dir; do
+        if [ -n "$backup_dir" ]; then
+            log_info "Deleting old backup: $backup_dir"
+            rm -rf "$backup_dir"
+            DELETED_COUNT=$((DELETED_COUNT + 1))
+        fi
+    done < <(find "$BACKUP_DIR" -maxdepth 1 -type d -name "backup_*" -mtime +7)
+
+    if [ "$DELETED_COUNT" -gt 0 ]; then
+        log_success "Cleaned up $DELETED_COUNT old backup(s)"
+    else
+        log_info "No old backups to clean up"
+    fi
+}
+
 pull_latest_code() {
     log_info "Pulling latest code from GitHub..."
 
@@ -220,6 +245,7 @@ main() {
 
     check_requirements
     create_backup
+    cleanup_old_backups
     pull_latest_code
     build_images
     run_tests

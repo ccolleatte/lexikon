@@ -33,16 +33,28 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware - Load origins from environment variable
-cors_origins = os.getenv(
+cors_origins_str = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000"
-).split(",")
+)
+cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
+# Validate CORS origins - reject wildcards in production
+if is_production():
+    invalid_origins = [o for o in cors_origins if "*" in o or o == "*"]
+    if invalid_origins:
+        logger.error(f"CORS wildcard origins NOT allowed in production: {invalid_origins}")
+        raise ValueError(
+            f"CORS_ORIGINS contains invalid wildcards in production: {invalid_origins}. "
+            f"Specify explicit domains (e.g., https://example.com)"
+        )
+    logger.info(f"✓ CORS origins validated ({len(cors_origins)} domain(s))")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  # Explicit methods (safer than *)
     allow_headers=["*"],
 )
 

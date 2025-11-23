@@ -354,6 +354,16 @@ docker-compose -f docker-compose.prod.yml restart backend
 - Keep Docker images updated
 - Rotate secrets annually
 
+**HSTS Preload (Advanced)**
+- HSTS header already configured in nginx (max-age=63072000 + preload)
+- To add domain to HSTS Preload List:
+  1. Ensure domain is HTTPS-only (http → https redirect working)
+  2. Test with: `curl -I https://your-domain.com | grep Strict-Transport`
+  3. Should see: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+  4. Visit https://hstspreload.org and submit your domain
+  5. Verify in ~5 days (protection in browsers worldwide)
+- **Warning:** Once submitted, HSTS cannot be removed for ~1 year!
+
 ### 4. Performance
 - Monitor Redis memory: `docker exec lexikon-redis redis-cli INFO`
 - Check database size: `docker exec lexikon-postgres psql -U lexikon -c '\dt+'`
