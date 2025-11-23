@@ -98,7 +98,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
-      REDIS_PREFIX: lexikon:
+      REDIS_PREFIX: "lexikon:"
 
       # JWT
       JWT_SECRET: ${JWT_SECRET}
