@@ -20,8 +20,59 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health")
 async def health_check():
-    """Basic health check."""
+    """Basic health check (liveness probe)."""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+@router.get("/ready")
+async def readiness_probe(db: Session = Depends(get_db)):
+    """
+    Readiness probe - returns 200 only if application can accept traffic.
+
+    Checks:
+    - Database connectivity (must be able to execute queries)
+    - Redis connectivity (cache layer must be available)
+
+    Returns:
+    - 200: Ready to accept traffic (all dependencies healthy)
+    - 503: Not ready (missing critical dependencies)
+
+    Used by Docker/Kubernetes for traffic routing decisions.
+    Different from /health (liveness) - readiness is stricter.
+    """
+    ready_status = {
+        "status": "ready",
+        "timestamp": datetime.utcnow().isoformat(),
+        "dependencies": {}
+    }
+
+    # Check database connectivity
+    try:
+        db.execute(text("SELECT 1"))
+        ready_status["dependencies"]["database"] = "ok"
+    except Exception as e:
+        logger.error(f"Database readiness check failed: {e}")
+        ready_status["status"] = "not_ready"
+        ready_status["dependencies"]["database"] = f"error: {str(e)}"
+        return ready_status, 503
+
+    # Check Redis connectivity
+    try:
+        redis_client = get_redis_client()
+        if redis_client.health_check():
+            ready_status["dependencies"]["cache"] = "ok"
+        else:
+            logger.error("Redis health check failed in readiness probe")
+            ready_status["status"] = "not_ready"
+            ready_status["dependencies"]["cache"] = "error: health check failed"
+            return ready_status, 503
+    except Exception as e:
+        logger.error(f"Redis readiness check failed: {e}")
+        ready_status["status"] = "not_ready"
+        ready_status["dependencies"]["cache"] = f"error: {str(e)}"
+        return ready_status, 503
+
+    return ready_status, 200
 
 
 @router.get("/status")
@@ -104,6 +155,7 @@ async def root():
         "status": "running",
         "docs": "/docs",
         "health": "/health",
+        "ready": "/ready",
         "status": "/status",
         "metrics": "/metrics",
     }

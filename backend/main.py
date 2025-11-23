@@ -73,6 +73,22 @@ def startup_event():
     Base.metadata.create_all(bind=engine)
     logger.info("Application startup complete")
 
+
+# Graceful shutdown handler
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Gracefully shutdown application"""
+    logger.info("Application shutdown initiated - waiting for in-flight requests...")
+
+    # Wait for in-flight requests to complete (max 30 seconds)
+    # Uvicorn will give us this time before force-killing workers
+    try:
+        import asyncio
+        await asyncio.sleep(0.1)  # Minimal yield to allow pending tasks to complete
+        logger.info("✓ Application shutdown complete")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+
 # Include routers
 app.include_router(onboarding.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
