@@ -1,6 +1,6 @@
 # Multi-stage build for optimized production image
 # Stage 1: Builder
-FROM python:3.13-slim as builder
+FROM python:3.12-slim as builder
 
 WORKDIR /build
 
@@ -19,7 +19,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 # Install only runtime dependencies (not build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
