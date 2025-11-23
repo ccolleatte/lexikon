@@ -23,6 +23,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - lexikon-network
 
   redis:
     image: redis:7-alpine
@@ -51,6 +53,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - lexikon-network
 
   backend:
     build:
