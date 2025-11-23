@@ -69,8 +69,8 @@ def startup_event():
         logger.error(f"Secret validation failed: {e}")
         raise
 
-    # Create database tables if they don't exist
-    Base.metadata.create_all(bind=engine)
+    # Create database tables if they don't exist (checkfirst=True prevents duplicate ENUM errors)
+    Base.metadata.create_all(bind=engine, checkfirst=True)
     logger.info("Application startup complete")
 
 
