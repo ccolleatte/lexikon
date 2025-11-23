@@ -22,12 +22,17 @@ import os
 import enum
 
 # Database URL from environment
+# Use SQLite for development, PostgreSQL for production
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://lexikon:dev-secret@localhost:5432/lexikon"
+    "DATABASE_URL", "sqlite:///./lexikon.db"
 )
 
 # Create engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -157,7 +162,7 @@ class Term(Base):
     __tablename__ = "terms"
 
     id = Column(String, primary_key=True)
-    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=True)  # TODO: Make non-nullable in future versions
     name = Column(String, nullable=False, index=True)
     definition = Column(Text, nullable=False)
     domain = Column(String, nullable=True)
@@ -171,7 +176,7 @@ class Term(Base):
     synonyms = Column(Text, nullable=True)  # JSON array
     formal_definition = Column(Text, nullable=True)
     citations = Column(Text, nullable=True)  # JSON array
-    metadata = Column(Text, nullable=True)  # JSON object
+    term_metadata = Column(Text, nullable=True)  # JSON object
 
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
@@ -208,6 +213,75 @@ class LLMConfig(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class Webhook(Base):
+    """Webhook configuration for event delivery."""
+    __tablename__ = "webhooks"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    url = Column(String, nullable=False)
+    events = Column(String, nullable=False)  # Comma-separated: "term_created,term_updated"
+    secret = Column(String, nullable=False)  # HMAC-SHA256 secret for signature
+    description = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    max_retries = Column(Integer, default=5)
+    retry_delay_seconds = Column(Integer, default=60)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    last_triggered_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="webhooks")
+    deliveries = relationship("WebhookDelivery", back_populates="webhook", cascade="all, delete-orphan")
+
+    def get_event_list(self) -> list:
+        """Parse comma-separated events into list."""
+        return [e.strip() for e in self.events.split(",")]
+
+    def should_handle_event(self, event_type: str) -> bool:
+        """Check if webhook handles this event type."""
+        return event_type in self.get_event_list()
+
+
+class WebhookDelivery(Base):
+    """Webhook delivery attempt tracking."""
+    __tablename__ = "webhook_deliveries"
+
+    id = Column(String, primary_key=True)
+    webhook_id = Column(String, ForeignKey("webhooks.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(String, nullable=False)  # e.g., "term_created"
+    payload = Column(Text, nullable=False)  # JSON payload
+    status = Column(String, nullable=False)  # "pending", "success", "failed"
+    response_status = Column(Integer, nullable=True)  # HTTP status code
+    response_body = Column(Text, nullable=True)  # Response from webhook
+    attempt_count = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=5)
+    next_retry_at = Column(DateTime, nullable=True)
+    last_error = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    delivered_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    webhook = relationship("Webhook", back_populates="deliveries")
+
+    def is_successful(self) -> bool:
+        """Check if delivery was successful."""
+        return self.status == "success"
+
+    def is_failed(self) -> bool:
+        """Check if delivery permanently failed."""
+        return self.status == "failed"
+
+    def should_retry(self) -> bool:
+        """Check if delivery should be retried."""
+        return self.status == "pending" and self.attempt_count < self.max_attempts
+
+
+# Add relationships to User model
+User.webhooks = relationship("Webhook", back_populates="user", cascade="all, delete-orphan")
+
+
 # Database helper functions
 def get_db():
     """Dependency for FastAPI routes"""
@@ -220,7 +294,7 @@ def get_db():
 
 def init_db():
     """Initialize database tables"""
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
 
 def drop_db():

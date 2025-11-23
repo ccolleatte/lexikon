@@ -1,7 +1,14 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, validator, field_validator
 from typing import Optional, Literal, Any
 from datetime import datetime
 import re
+from validators.input_validators import (
+    validate_name,
+    validate_definition,
+    validate_string_input,
+    validate_password,
+    validate_email_format,
+)
 
 
 # Enums
@@ -46,11 +53,26 @@ class UserProfileRequest(BaseModel):
     country: Optional[str] = Field(None, pattern="^[A-Z]{2}$")
     sessionId: str
 
-    @validator("firstName", "lastName")
-    def validate_name(cls, v):
-        if not re.match(r"^[a-zA-ZÀ-ÿ\s\-]{2,100}$", v):
-            raise ValueError("Invalid name format")
-        return v
+    @validator("firstName", "lastName", pre=True)
+    def validate_user_name(cls, v):
+        """Validate and normalize user names."""
+        if not v:
+            raise ValueError("Name cannot be empty")
+        return validate_name(v, min_length=2, max_length=100)
+
+    @validator("institution", pre=True)
+    def validate_institution(cls, v):
+        """Validate and sanitize institution name."""
+        if v is None:
+            return v
+        return validate_string_input(v, min_length=1, max_length=200, field_name="Institution")
+
+    @validator("email", pre=True)
+    def validate_user_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
 
 
 class UserProfileResponse(BaseModel):
@@ -76,12 +98,26 @@ class CreateTermRequest(BaseModel):
     level: TermLevel = "quick-draft"
     status: TermStatus = "draft"
 
-    @validator("name")
-    def validate_name(cls, v):
-        v = v.strip()
-        if not re.match(r"^[a-zA-ZÀ-ÿ0-9\s\-]+$", v):
-            raise ValueError("Invalid characters in name")
-        return v
+    @validator("name", pre=True)
+    def validate_term_name(cls, v):
+        """Validate and normalize term name."""
+        if not v:
+            raise ValueError("Term name cannot be empty")
+        return validate_name(v, min_length=3, max_length=100)
+
+    @validator("definition", pre=True)
+    def validate_term_definition(cls, v):
+        """Validate and sanitize term definition (allow HTML)."""
+        if not v:
+            raise ValueError("Definition cannot be empty")
+        return validate_definition(v, min_length=50, max_length=500)
+
+    @validator("domain", pre=True)
+    def validate_term_domain(cls, v):
+        """Validate and sanitize domain field."""
+        if v is None:
+            return v
+        return validate_string_input(v, min_length=1, max_length=100, field_name="Domain")
 
 
 class TermResponse(BaseModel):

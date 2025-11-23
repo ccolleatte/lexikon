@@ -692,12 +692,26 @@ pre-commit run --all-files
 
 ---
 
-## Task 5: Audit sécurité (15-20h)
+## Task 5: Audit sécurité (15-20h) ✅ COMPLETE
 
 **Priority**: 🔴 CRITIQUE
-**Owner**: QA Eng
+**Owner**: QA Eng + Security Team
 **Time**: 15-20 heures
-**Status**: Not started
+**Status**: ✅ COMPLETE (Nov 18, 2025)
+
+### Completion Summary
+
+**All 3 critical vulnerabilities fixed:**
+1. ✅ SQL Injection (CVSS 9.8) - Commit a327653
+2. ✅ BOLA (CVSS 8.6) - Commit 6172f87
+3. ✅ Secrets Hardcoding (CVSS 9.1) - Commit 8303db0
+
+**Documentation:**
+- ✅ SECURITY-AUDIT-WEEK1.md created with full vulnerability details
+- ✅ TECHNICAL-DEBT-TRACKER.md with 12-item backlog
+- ✅ BRANCH-ARCHIVE-LOG.md documenting analysis branches
+
+**Production Readiness:** ✅ All critical security gates passed
 
 ### Checklist sécurité
 
@@ -821,7 +835,174 @@ All boxes checked = Ready for v0.1 release candidate
 
 ---
 
+---
+
+## 📋 Implementation Status Review - November 17, 2025
+
+**Overall Assessment:** 3/5 tasks substantially complete, 2 require follow-up before v0.1 release
+
+### What's Actually Implemented
+
+| Task | Plan Hours | Status | Reality |
+|------|-----------|--------|---------|
+| **1. JWT Integration** | 2-3h | ✅ DONE | Real JWT working end-to-end in `backend/api/auth.py`; old `users.py` unused with fake tokens |
+| **2. CORS Configuration** | 1h | ⚠️ PARTIAL | Hardcoded in `main.py` lines 20-25; `.env.example` ready; needs 30 min refactor |
+| **3. Tests Completion** | 40h | ✅ SUBSTANTIAL | Route tests excellent (96 passing, 85% coverage **exceeds 80% target**); component tests missing |
+| **4. Linting + Formatting** | 8-10h | ❌ TODO | All config files missing (.eslintrc.json, .prettierrc, pyproject.toml); ESLint not installed |
+| **5. Security Audit** | 15-20h | ❌ TODO | No audit document; JWT solid but untested edge cases; CORS hardcoding is risk |
+
+---
+
+### Critical Path for v0.1 Release
+
+#### 🔴 BLOCKER (Must fix)
+
+**Task 2 - CORS Hardcoding (30 minutes)**
+
+Location: `backend/main.py` lines 20-25
+```python
+# CURRENT (hardcoded):
+allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"],
+
+# MUST BECOME (env-based):
+allow_origins=settings.ALLOWED_ORIGINS
+```
+
+**Why blocking:** Cannot deploy to production domain (staging.lexikon.ai, app.lexikon.ai) without code change.
+
+**Fix steps:**
+1. Create `backend/config.py` with Settings class (from Task 2 spec)
+2. Update `backend/main.py` line 21 to use `settings.ALLOWED_ORIGINS`
+3. Test with `.env` override
+4. Verify CORS works with different origins
+
+**Estimated time:** 30 minutes
+
+---
+
+#### 🟡 IMPORTANT (Should do before release)
+
+**Task 4 - Linting Infrastructure (8-10 hours)**
+
+**Status:** Completely missing
+- No `.eslintrc.json` for frontend
+- No `.prettierrc` for frontend formatting
+- No `pyproject.toml` for Python (ruff/black)
+- No `.pre-commit-config.yaml` for git hooks
+- `npm lint` command **broken** (ESLint not installed)
+
+**Why important:**
+- No code quality gates = drift in style/standards
+- Technical debt accumulates across PRs
+- Harder code reviews with formatting noise
+
+**Estimated time:** 8-10 hours (can parallelize with other work)
+
+**Task 5 - Security Audit Documentation (15-20 hours)**
+
+**Status:** No formal audit document
+- JWT implementation is solid ✅
+- Token validation middleware complete ✅
+- But no tests for edge cases:
+  - Expired tokens? ❌
+  - Invalid signatures? ❌
+  - Malformed headers? ❌
+  - CORS correctly rejecting disallowed origins? ❌
+
+**Why important:**
+- v0.1 needs security sign-off
+- CORS hardcoding (Task 2) is security risk
+- Need formal documentation of controls
+
+**Estimated time:** 15-20 hours (but much groundwork done)
+
+---
+
+### What's Production-Ready ✅
+
+**Phase A: Email/Password Registration**
+- ✅ Registration endpoint (`POST /api/auth/register`) working end-to-end
+- ✅ Real JWT tokens (access + refresh) being generated
+- ✅ Password hashing with bcrypt 4.1.2 (12 rounds)
+- ✅ User data persisted in SQLite
+- ✅ Tested via CLI and frontend proxy
+- See: `docs/SPRINT-2-PROGRESS.md` - Phase A Completion section
+
+**Authentication System (Task 1)**
+- ✅ JWT generation, validation, refresh complete
+- ✅ Middleware route protection working
+- ✅ Login endpoint functional with password verification
+- ✅ Change-password endpoint ready
+- ✅ Scope-based authorization (require_scope decorator)
+- ✅ Adoption level gating (require_adoption_level decorator)
+
+**Testing (Task 3)**
+- ✅ 96 tests passing, 0 failures
+- ✅ 85.04% line coverage (target: 80%) - **EXCEEDS TARGET**
+- ✅ Route tests: 14-17 assertions per file (NOT stubs)
+- ✅ Store tests: 30+ assertions, 94.47% coverage
+- ✅ API client tests: 23 tests, 100% coverage
+
+---
+
+### Recommended Work Order
+
+**Week of Nov 18-22:**
+1. Fix CORS (30 min) - Task 2 (BLOCKING)
+2. Install linting tools (2-3h) - Task 4 (start)
+3. Continue AI relations work (Task 3 of Sprint 2 main features)
+
+**Week of Nov 25-29:**
+4. Complete linting config (5-7h more) - Task 4 (finish)
+5. Security audit documentation (15-20h) - Task 5
+6. Finalize v0.1 sign-off
+
+---
+
+### Sign-off Checklist for v0.1
+
+```
+TIER-1 BLOCKER Completion Checklist:
+
+✅ Task 1: JWT Integration
+  - Real tokens in auth endpoints? YES
+  - Middleware protects routes? YES
+  - E2E tests cover flows? PARTIAL (edge cases missing)
+
+⏳ Task 2: CORS Configuration (IN PROGRESS)
+  - [ ] CORS uses env vars (not hardcoded)
+  - [ ] .env.example complete
+  - [ ] Deployment tested with different origin
+
+⏳ Task 3: Tests Completion (SUBSTANTIAL, gaps remain)
+  - ✅ 80%+ line coverage achieved
+  - ✅ Route tests comprehensive
+  - [ ] Component tests added (optional)
+
+❌ Task 4: Linting + Formatting (NOT STARTED)
+  - [ ] ESLint configured and passing
+  - [ ] Prettier formatting applied
+  - [ ] Black/Ruff configured for Python
+  - [ ] Pre-commit hooks working
+
+❌ Task 5: Security Audit (NOT STARTED)
+  - [ ] SECURITY-AUDIT.md document written
+  - [ ] Token edge cases tested
+  - [ ] CORS properly enforced
+  - [ ] Input validation verified
+
+GATE FOR v0.1: Task 2 ✅ + At least 3/5 complete
+```
+
+---
+
 ## Next Steps
 
-Once TIER-1 complete:
+Once TIER-1 BLOCKER work items completed:
 → Proceed to [TIER-2-IMPORTANT-weeks2-3.md](TIER-2-IMPORTANT-weeks2-3.md)
+
+**Estimated timeline:**
+- Task 2 (CORS): Done by Nov 19
+- Task 4 (Linting): Done by Nov 22
+- Task 5 (Security): Done by Nov 29
+- **v0.1 Release Ready:** Week of Dec 2

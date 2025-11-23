@@ -421,6 +421,185 @@ curl http://localhost:8000/api/auth/me \
 
 ---
 
+---
+
+## ✅ Phase A Completion - Email/Password Registration (Nov 17, 2025)
+
+**Status:** COMPLETE AND VERIFIED
+
+### What Was Delivered
+
+Email/password registration endpoint fully functional end-to-end:
+- **Endpoint**: `POST /api/auth/register`
+- **Input validation**: Pydantic models (email, password 8+ chars, names)
+- **Email uniqueness**: Checked against database before creation
+- **Password hashing**: bcrypt 4.1.2 (12 rounds)
+- **User creation**: Stored in SQLite with UUID primary key
+- **JWT generation**: Real access token (60 min) + refresh token (7 days)
+- **Response**: User data + tokens ready for frontend
+
+### Technical Implementation
+
+**Files Modified:**
+- `backend/api/auth.py` - Complete registration endpoint with logging
+- `backend/api/__init__.py` - Created Python package init
+- `vite.config.js` - Fixed proxy port 8001 → 8000
+- Backend database: SQLite with users table (from Task migrations)
+
+**Architecture:**
+```
+User submits form → Vite proxy (5173) → Backend (8000)
+    ↓
+Register endpoint validates input
+    ↓
+Check email uniqueness in database
+    ↓
+Hash password with bcrypt
+    ↓
+Create User object + insert into DB
+    ↓
+Generate JWT pair via create_token_pair()
+    ↓
+Return success response with tokens
+```
+
+### Test Results
+
+**CLI Test:**
+```bash
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "webtest@lexikon.fr",
+    "password": "WebTest123456",
+    "first_name": "Web",
+    "last_name": "Tester"
+  }'
+
+Response: 201 CREATED
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ...",
+    "user": { ... }
+  }
+}
+```
+
+**Verified:**
+- ✅ Input validation working (tested with invalid data earlier)
+- ✅ Email uniqueness enforced (second registration with same email rejected)
+- ✅ Password hashing correct (bcrypt error resolved via version fix)
+- ✅ JWT tokens valid (3600s expiry, proper format)
+- ✅ Database persistence verified (users in SQLite)
+- ✅ Frontend proxy working (via port 5173 → 8000)
+
+### Known Limitations (Deferred to Phase 2+)
+
+- No email verification/confirmation (Phase 3)
+- No OAuth providers yet (Phase 2: Google, Microsoft)
+- No password reset flow (Phase 3)
+- No email notifications
+
+### Commit
+
+```
+b66e0df - Fix registration endpoint - correct backend port and add API package init
+```
+
+---
+
+## 📋 TIER-1-BLOCKER Status Review (Nov 17, 2025)
+
+Cross-reference: `docs/roadmap/TIER-1-BLOCKER-week1.md`
+
+Implementation status of the 5 critical week-1 tasks:
+
+### Task 1: JWT Integration ✅ COMPLETE
+
+| Item | Status | Details |
+|------|--------|---------|
+| Real JWT generation | ✅ DONE | `backend/auth/jwt.py` with `create_access_token()`, `create_refresh_token()` |
+| Real JWT validation | ✅ DONE | `verify_token()` function validates expiry, signature, claims |
+| Registration endpoint | ✅ DONE | `POST /api/auth/register` returns real JWT pair |
+| Login endpoint | ✅ DONE | `POST /api/auth/login` validates password, returns JWT pair |
+| Middleware protection | ✅ DONE | `get_current_user()` in middleware.py protects routes |
+| Scope-based auth | ✅ DONE | `require_scope()` and `require_adoption_level()` decorators ready |
+| E2E tests | ⚠️ PARTIAL | Tests cover login/register flow but not token edge cases (expiry, invalid sig) |
+
+**Key Finding:** JWT infrastructure is production-ready. Old `backend/api/users.py` still has fake tokens (line 43) but is unused.
+
+### Task 2: CORS Configuration ⚠️ REQUIRES FIX
+
+| Item | Status | Details |
+|------|--------|---------|
+| Hardcoded origins | ⚠️ ISSUE | `backend/main.py` lines 20-25 has hardcoded `["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"]` |
+| .env.example ready | ✅ DONE | `backend/.env.example` has `CORS_ORIGINS=http://localhost:5173,http://localhost:3000` |
+| config.py module | ❌ TODO | No `backend/config.py` with Settings class |
+| README documented | ⏳ TODO | Configuration section not added |
+
+**🔴 BLOCKER**: Cannot deploy to different domain without code change. Fix: Create `backend/config.py`, update main.py to use `settings.ALLOWED_ORIGINS`.
+**Time to fix:** 30 minutes
+
+### Task 3: Tests Completion ✅ EXCEEDS TARGET
+
+| Item | Status | Details |
+|------|--------|---------|
+| Route tests | ✅ EXCELLENT | `src/routes/login/page.test.ts`: 14 real tests; `register/page.test.ts`: 17 tests; coverage excellent |
+| Auth store tests | ✅ EXCELLENT | `src/lib/stores/auth.test.ts`: 30+ tests, 94.47% coverage |
+| API client tests | ✅ EXCELLENT | `src/lib/utils/api.test.ts`: 23 tests, 100% coverage |
+| Component tests | ❌ MISSING | Input.test.ts, Button.test.ts, Select.test.ts not created |
+| Overall coverage | ✅ EXCEEDS TARGET | **85.04% line coverage** (target: 80%) |
+| Test results | ✅ PASSING | 96 tests passing, 0 failures |
+
+**Key Finding:** Route and store tests are comprehensive (NOT stubs as TIER-1 expected). Coverage **exceeds 80% target**. Missing component library tests but low priority.
+
+### Task 4: Linting + Formatting ❌ NOT STARTED
+
+| Item | Status | Details |
+|------|--------|---------|
+| .eslintrc.json | ❌ MISSING | Frontend ESLint config not created |
+| .prettierrc | ❌ MISSING | Frontend Prettier config not created |
+| pyproject.toml | ❌ MISSING | Python ruff/black config not created |
+| .pre-commit-config.yaml | ❌ MISSING | Pre-commit hooks not configured |
+| npm lint script | ❌ BROKEN | `npm run lint` fails: `'eslint' is not recognized` (not installed) |
+| npm format script | ✅ EXISTS | `npm run format` in package.json but config missing |
+
+**🟡 IMPORTANT**: Linting infrastructure completely missing. No code quality gates. Effort: 8-10 hours.
+
+### Task 5: Security Audit ❌ NOT STARTED
+
+| Item | Status | Details |
+|------|--------|---------|
+| SECURITY-AUDIT.md | ❌ MISSING | No formal audit document |
+| Token validation tests | ⚠️ PARTIAL | JWT works but no tests for: expired tokens, invalid signatures, malformed headers |
+| CORS enforcement tests | ❌ MISSING | No test that CORS correctly rejects disallowed origins |
+| Input validation docs | ⚠️ PARTIAL | Backend validation exists (Pydantic) but not formally tested/documented |
+| Rate limiting | ❌ NOT IMPL | Not part of TIER-1 but noted as future work |
+
+**Assessment:** JWT implementation solid. CORS hardcoding (Task 2) is security risk. No documented audit. Effort: 15-20 hours (but much groundwork done).
+
+---
+
+### Summary: Production Readiness
+
+**✅ Ready for v0.1:**
+- Real JWT tokens working end-to-end
+- Registration/login/auth fully functional
+- Test coverage exceeds 80% target
+- Database layer solid
+
+**⚠️ Must Fix Before Production:**
+- CORS hardcoding (30 min) - Task 2
+
+**🟡 Important But Not Blocking:**
+- Linting infrastructure (8-10h) - Task 4
+- Security audit documentation (15-20h) - Task 5
+- Component tests (8h) - Task 3 extension
+
+---
+
 ## Next Steps - Remaining Sprint 2 Features
 
 ### 3. AI Relation Suggestions (In Progress)

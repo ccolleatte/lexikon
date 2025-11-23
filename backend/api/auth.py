@@ -3,10 +3,19 @@ Authentication API endpoints.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 from typing import Optional
 import uuid
+import logging
+
+from validators.input_validators import (
+    validate_password,
+    validate_email_format,
+    validate_name,
+)
+
+logger = logging.getLogger(__name__)
 
 from db.postgres import get_db, User
 from auth.jwt import (
@@ -19,6 +28,7 @@ from auth.jwt import (
 from auth.middleware import get_current_user, AuthenticationError
 from auth.api_keys import create_api_key, list_api_keys, revoke_api_key
 from models import ApiResponse
+from middleware.rate_limit import limiter, RATE_LIMIT_AUTH, RATE_LIMIT_API
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -32,10 +42,45 @@ class RegisterRequest(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=100)
     language: str = Field(default="fr", pattern="^(fr|en|es|de|it)$")
 
+    @validator("password", pre=True)
+    def validate_register_password(cls, v):
+        """Validate password strength."""
+        if not v:
+            raise ValueError("Password cannot be empty")
+        return validate_password(v)
+
+    @validator("first_name", "last_name", pre=True)
+    def validate_register_names(cls, v):
+        """Validate and normalize names."""
+        if not v:
+            raise ValueError("Name cannot be empty")
+        return validate_name(v, min_length=2, max_length=100)
+
+    @validator("email", pre=True)
+    def validate_register_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    @validator("email", pre=True)
+    def validate_login_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
+
+    @validator("password", pre=True)
+    def validate_login_password(cls, v):
+        """Validate password is not empty."""
+        if not v:
+            raise ValueError("Password cannot be empty")
+        return v
 
 
 class LoginResponse(BaseModel):
@@ -54,11 +99,33 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
+    @validator("current_password", pre=True)
+    def validate_current_password(cls, v):
+        """Validate current password is not empty."""
+        if not v:
+            raise ValueError("Current password cannot be empty")
+        return v
+
+    @validator("new_password", pre=True)
+    def validate_new_password(cls, v):
+        """Validate new password strength."""
+        if not v:
+            raise ValueError("New password cannot be empty")
+        return validate_password(v)
+
 
 class CreateApiKeyRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     scopes: str = Field(default="read", pattern="^(read|write|admin|read,write)$")
     expires_in_days: Optional[int] = Field(None, ge=1, le=365)
+
+    @validator("name", pre=True)
+    def validate_api_key_name(cls, v):
+        """Validate and sanitize API key name."""
+        if not v:
+            raise ValueError("API key name cannot be empty")
+        from validators.input_validators import validate_string_input
+        return validate_string_input(v, min_length=1, max_length=100, field_name="API key name")
 
 
 class ApiKeyResponse(BaseModel):
@@ -74,66 +141,192 @@ class ApiKeyResponse(BaseModel):
 
 # Endpoints
 @router.post("/register", status_code=201)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    """Register a new user account."""
+    """
+    Register a new user account.
 
-    # Check if email already exists
-    existing = db.query(User).filter(User.email == request.email).first()
-    if existing:
-        return ApiResponse(
-            success=False,
-            error={
-                "code": "EMAIL_EXISTS",
-                "message": "This email is already registered",
-                "details": {"email": request.email},
+    Creates a new user with email/password authentication and generates JWT tokens.
+
+    Args:
+        request: Registration data containing:
+            - email: Valid email address
+            - password: Strong password (8+ chars, uppercase, lowercase, digit, special char)
+            - first_name: First name (2-100 chars, letters + diacritics only)
+            - last_name: Last name (2-100 chars, letters + diacritics only)
+            - language: Preferred language (default: "fr", options: fr/en/es/de/it)
+
+    Returns:
+        201 Created: {
+            "success": true,
+            "data": {
+                "access_token": "jwt...",
+                "refresh_token": "jwt...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": {
+                    "id": "uuid",
+                    "email": "user@example.com",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "language": "fr",
+                    "adoption_level": "quick-project"
+                }
+            }
+        }
+
+    Raises:
+        422 Unprocessable Entity: Validation error
+        400 Bad Request: Email already exists
+        429 Too Many Requests: Rate limit exceeded (5 requests/minute)
+
+    Rate Limit: 5 requests per minute per IP
+
+    Examples:
+        curl -X POST http://localhost:8000/api/auth/register \\
+            -H "Content-Type: application/json" \\
+            -d '{
+                "email": "user@example.com",
+                "password": "SecurePass123!",
+                "first_name": "John",
+                "last_name": "Doe",
+                "language": "en"
+            }'
+    """
+    try:
+        logger.info(f"Register: Starting for {request.email}")
+
+        # Check if email already exists
+        existing = db.query(User).filter(User.email == request.email).first()
+        if existing:
+            logger.warning(f"Register: Email {request.email} already exists")
+            return ApiResponse(
+                success=False,
+                error={
+                    "code": "EMAIL_EXISTS",
+                    "message": "This email is already registered",
+                    "details": {"email": request.email},
+                },
+            )
+
+        logger.info(f"Register: Hashing password for {request.email}")
+        # Hash password
+        password_hash = hash_password(request.password)
+        logger.info(f"Register: Password hashed successfully")
+
+        # Create user
+        user = User(
+            id=str(uuid.uuid4()),
+            email=request.email,
+            password_hash=password_hash,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            language=request.language,
+            adoption_level="quick-project",
+            is_active=True,
+        )
+        logger.info(f"Register: User object created, saving to DB")
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"Register: User {request.email} saved to database")
+
+        # Generate tokens
+        logger.info(f"Register: Generating tokens")
+        tokens = create_token_pair(user.id, user.email)
+        logger.info(f"Register: Tokens generated: {list(tokens.keys())}")
+
+        response_data = LoginResponse(
+            **tokens,
+            user={
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "language": user.language,
+                "adoption_level": user.adoption_level,
             },
         )
+        logger.info(f"Register: Response data prepared")
 
-    # Hash password
-    password_hash = hash_password(request.password)
+        return ApiResponse(success=True, data=response_data.model_dump())
 
-    # Create user
-    user = User(
-        id=str(uuid.uuid4()),
-        email=request.email,
-        password_hash=password_hash,
-        first_name=request.first_name,
-        last_name=request.last_name,
-        language=request.language,
-        adoption_level="quick-project",
-        is_active=True,
-    )
-
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    # Generate tokens
-    tokens = create_token_pair(user.id, user.email)
-
-    response_data = LoginResponse(
-        **tokens,
-        user={
-            "id": user.id,
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "language": user.language,
-            "adoption_level": user.adoption_level,
-        },
-    )
-
-    return ApiResponse(success=True, data=response_data.model_dump())
+    except Exception as e:
+        logger.error(f"Register: Error - {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
 
 
 @router.post("/login")
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
-    """Login with email and password."""
+    """
+    Authenticate user with email and password using constant-time verification.
+
+    Returns JWT tokens for authenticated API access.
+
+    Security: Uses constant-time password verification to prevent timing attacks
+    that leak user existence. Always performs password verification even for
+    non-existent users to prevent user enumeration.
+
+    Args:
+        request: Login credentials containing:
+            - email: Registered email address
+            - password: User password
+
+    Returns:
+        200 OK: {
+            "success": true,
+            "data": {
+                "access_token": "jwt...",
+                "refresh_token": "jwt...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": { "id", "email", "first_name", "last_name", "language", "adoption_level" }
+            }
+        }
+
+        200 OK (on failure): {
+            "success": false,
+            "error": {
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid email or password"
+            }
+        }
+
+    Raises:
+        422 Unprocessable Entity: Validation error
+        429 Too Many Requests: Rate limit exceeded (5 requests/minute)
+
+    Rate Limit: 5 requests per minute per IP
+
+    Note: Returns 200 even on authentication failure (no user enumeration).
+
+    Examples:
+        curl -X POST http://localhost:8000/api/auth/login \\
+            -H "Content-Type: application/json" \\
+            -d '{
+                "email": "user@example.com",
+                "password": "SecurePass123!"
+            }'
+    """
 
     # Find user
     user = db.query(User).filter(User.email == request.email).first()
 
+    # Use a dummy hash for non-existent users to prevent timing attacks
+    # This ensures password verification takes same time whether user exists or not
     if not user:
+        # Create a dummy user with a bcrypt hash to ensure constant-time verification
+        # This hash is for a non-existent user and will always fail verification
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        dummy_hash = pwd_context.hash("dummy-password-" + request.email)
+
+        # Always verify (takes constant time regardless of user existence)
+        verify_password(request.password, dummy_hash)
+
+        # Always return same error message (don't leak user existence)
         return ApiResponse(
             success=False,
             error={
@@ -152,7 +345,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             },
         )
 
-    # Verify password
+    # Verify password using constant-time comparison (bcrypt handles this)
     if not verify_password(request.password, user.password_hash):
         return ApiResponse(
             success=False,

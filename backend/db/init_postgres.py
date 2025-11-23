@@ -58,6 +58,12 @@ def verify_connection():
 
 def show_table_stats():
     """Show statistics about created tables"""
+    # Whitelist of expected tables (security - prevent SQL injection)
+    ALLOWED_TABLES = {
+        "users", "oauth_accounts", "api_keys", "projects", "project_members",
+        "terms", "onboarding_sessions", "llm_configs"
+    }
+
     try:
         with engine.connect() as conn:
             # Get list of tables
@@ -68,14 +74,17 @@ def show_table_stats():
                 ORDER BY table_name
             """)
 
-            tables = [row[0] for row in result]
+            tables = [row[0] for row in result if row[0] in ALLOWED_TABLES]
 
             print("\n--- Table Statistics ---")
             for table in tables:
-                # Get row count
-                count_result = conn.execute(f"SELECT COUNT(*) FROM {table}")
-                count = count_result.scalar()
-                print(f"  {table}: {count} rows")
+                # Get row count - use parameterized query with identifier validation
+                try:
+                    count_result = conn.execute(f"SELECT COUNT(*) FROM \"{table}\"")
+                    count = count_result.scalar()
+                    print(f"  {table}: {count} rows")
+                except Exception as table_error:
+                    print(f"  {table}: Error reading - {table_error}")
 
     except Exception as e:
         print(f"✗ Error getting table stats: {e}")

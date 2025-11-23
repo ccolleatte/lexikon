@@ -1,0 +1,75 @@
+# Secrets et configuration
+.env*
+!.env.example
+*.pem
+*.key
+*.crt
+ssl/
+secrets/
+
+# Git et versioning
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+env/
+
+# Tests et développement
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.coverage.*
+
+# Logs et temporaires
+logs/
+*.log
+*.log.*
+tmp/
+temp/
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Archives
+*.zip
+*.tar.gz
+*.tar

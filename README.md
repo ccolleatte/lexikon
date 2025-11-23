@@ -26,6 +26,45 @@ npm run dev
 
 ---
 
+## ⚙️ Configuration
+
+### Environment Variables Setup
+
+1. **Copy template to local config:**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. **Update `.env.local` with your local values:**
+   ```env
+   POSTGRES_PASSWORD=dev-secret-local
+   NEO4J_PASSWORD=dev-secret-local
+   JWT_SECRET=dev-jwt-secret-local
+   ```
+
+3. **Load environment for Docker Compose:**
+   ```bash
+   # Linux/macOS
+   export $(cat .env.local | xargs)
+   docker-compose up -d
+
+   # Windows (PowerShell)
+   Get-Content .env.local | ForEach-Object {
+       if ($_ -and -not $_.StartsWith('#')) {
+           $name, $value = $_.Split('=')
+           [Environment]::SetEnvironmentVariable($name, $value)
+       }
+   }
+   ```
+
+### Security Notes
+- ✅ `.env.local` is git-ignored (never commit credentials)
+- ✅ Use `.env.example` as template with `change-me` placeholders
+- ⚠️ **Production**: Use strong, randomly generated passwords
+- ⚠️ **Production**: Use secrets management (AWS Secrets Manager, Vault, etc.)
+
+---
+
 ## 🔀 Development Workflow
 
 We use **Git Flow** branching model for organized, safe development:
