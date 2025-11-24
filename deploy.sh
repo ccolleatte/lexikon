@@ -246,6 +246,27 @@ verify_deployment() {
     log_success "Deployment verified"
 }
 
+setup_monitoring() {
+    log_info "Setting up Uptime Kuma monitoring..."
+
+    cd "$REPO_DIR"
+
+    # Start Uptime Kuma container
+    if docker-compose -f docker-compose.monitoring.yml up -d; then
+        log_success "Uptime Kuma started"
+        log_info "Access dashboard at: https://your-domain.com/monitoring/"
+        log_info "On first visit, create admin account"
+        log_info ""
+        log_info "Recommended monitors to add:"
+        log_info "  1. Backend Health: https://your-domain.com/api/health (30s interval)"
+        log_info "  2. Frontend: https://your-domain.com/ (60s interval)"
+        log_info "  3. SSL Certificate: HTTPS monitor (daily)"
+    else
+        log_error "Failed to start Uptime Kuma"
+        log_warning "You can manually start it with: docker-compose -f docker-compose.monitoring.yml up -d"
+    fi
+}
+
 ###############################################################################
 # Main
 ###############################################################################
@@ -264,10 +285,12 @@ main() {
     start_services
     wait_for_health
     verify_deployment
+    setup_monitoring
 
     log_success "Deployment completed successfully!"
     log_info "Application is available at: https://your-domain.com"
     log_info "Health check: curl https://your-domain.com/api/health"
+    log_info "Monitoring dashboard: https://your-domain.com/monitoring/"
 }
 
 # Run main function
