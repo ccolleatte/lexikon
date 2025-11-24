@@ -1,0 +1,47 @@
+# Multi-stage build for SvelteKit Node.js SSR
+# Stage 1: Builder
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build SvelteKit application (generates /build directory)
+RUN npm run build
+
+# Stage 2: Production runtime
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dumb-init to handle signals properly
+RUN apk add --no-cache dumb-init
+
+# Copy built application from builder
+COPY --from=builder /app/build ./build
+
+# Copy node_modules from builder
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy package.json for runtime dependencies
+COPY --from=builder /app/package.json ./
+
+# Create non-root user for security
+RUN addgroup -g 1000 node && adduser -u 1000 -G node -s /bin/sh -D node
+USER node
+
+# Expose port
+EXPOSE 3000
+
+# Use dumb-init to handle signals (SIGTERM, SIGINT)
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start SvelteKit server
+CMD ["node", "build"]
