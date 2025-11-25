@@ -87,3 +87,9 @@ temp/
 *.tmp
 .svelte-kit/
 .turbo/
+
+# Playwright E2E Tests
+playwright-report/
+playwright/.cache/
+.playwright/
+.env.e2e

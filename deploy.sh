@@ -222,6 +222,31 @@ wait_for_health() {
 }
 
 verify_deployment() {
+
+run_e2e_tests() {
+    log_info "Running E2E smoke tests against production stack..."
+
+    cd "$REPO_DIR"
+
+    # Check if Playwright is installed
+    if ! npm list @playwright/test &> /dev/null; then
+        log_info "Installing Playwright..."
+        npm ci
+        npx playwright install chromium --with-deps
+    fi
+
+    # Run smoke tests only (fast validation)
+    log_info "Executing E2E smoke tests..."
+    if BASE_URL=http://localhost:8080 \
+       npm run test:e2e:smoke -- --project=chromium 2>&1 | tee /tmp/e2e-smoke.log; then
+        log_success "E2E smoke tests PASSED ✓"
+        return 0
+    else
+        log_warning "E2E smoke tests FAILED - see /tmp/e2e-smoke.log"
+        log_warning "Deployment continues (E2E is advisory, not blocking)"
+        return 0  # Non-blocking
+    fi
+}
     log_info "Verifying deployment..."
 
     # Check if all containers are running
@@ -284,6 +309,7 @@ main() {
     setup_ssl
     start_services
     wait_for_health
+    run_e2e_tests
     verify_deployment
     setup_monitoring
 
