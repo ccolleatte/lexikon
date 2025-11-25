@@ -7,8 +7,7 @@
 *.env.prod
 # Exception: .env.prod.example is a template (not a secret)
 !.env.prod.example
-# But still ignore .env.*.example (other examples)
-.env.*.example
+!.env.e2e.example
 # Ignore generated config files
 .env.prod.generated
 .env.*.generated
