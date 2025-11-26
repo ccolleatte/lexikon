@@ -178,6 +178,9 @@ class Term(Base):
     citations = Column(Text, nullable=True)  # JSON array
     term_metadata = Column(Text, nullable=True)  # JSON object
 
+    # Semantic search: Vector embedding for similarity search
+    embedding = Column(Text, nullable=True)  # JSON serialized list of floats (for SQLite compatibility)
+
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -133,6 +133,37 @@ class TermResponse(BaseModel):
     nextSteps: dict[str, str]
 
 
+# Semantic Search Models
+class SearchTermRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=500)
+    similarity_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    top_k: int = Field(default=5, ge=1, le=50)
+
+    @validator("query", pre=True)
+    def validate_search_query(cls, v):
+        """Validate and normalize search query."""
+        if not v:
+            raise ValueError("Search query cannot be empty")
+        return validate_string_input(v, min_length=1, max_length=500, field_name="Search query")
+
+
+class SearchResult(BaseModel):
+    term_id: str
+    term_name: str
+    definition: str
+    similarity_score: float = Field(..., ge=0.0, le=1.0)
+    domain: Optional[str] = None
+    level: TermLevel
+
+
+class SearchResponse(BaseModel):
+    query: str
+    results: list[SearchResult]
+    total: int
+    threshold_used: float
+    execution_time_ms: Optional[float] = None
+
+
 # API Response Wrapper
 class ApiResponse(BaseModel):
     success: bool
