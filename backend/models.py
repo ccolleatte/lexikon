@@ -164,6 +164,49 @@ class SearchResponse(BaseModel):
     execution_time_ms: Optional[float] = None
 
 
+# Ontology Reasoning Models
+class CreateRelationRequest(BaseModel):
+    source_term_id: str
+    target_term_id: str
+    relation_type: str = Field(..., pattern="^(equivalent|related|broader|narrower|part_of|has_part|inverse)$")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    metadata: Optional[str] = None
+
+
+class RelationResponse(BaseModel):
+    id: str
+    source_term_id: str
+    target_term_id: str
+    relation_type: str
+    confidence: float
+    created_by: str
+    created_at: str
+
+
+class InferredRelation(BaseModel):
+    target_term_id: str
+    target_term_name: str
+    relation_type: str
+    confidence: float
+    rule: str
+    depth: int
+
+
+class InferenceRequest(BaseModel):
+    term_id: str
+    rules: Optional[list[str]] = None  # transitive, symmetric, equivalence, inverse
+    max_depth: int = Field(default=3, ge=1, le=10)
+    confidence_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+
+
+class InferenceResponse(BaseModel):
+    term_id: str
+    inferred_relations: list[InferredRelation]
+    rules_applied: list[str]
+    total_inferred: int
+    execution_time_ms: Optional[float] = None
+
+
 # API Response Wrapper
 class ApiResponse(BaseModel):
     success: bool

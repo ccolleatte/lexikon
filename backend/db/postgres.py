@@ -188,6 +188,27 @@ class Term(Base):
     # Relationships
     project = relationship("Project", back_populates="terms")
     creator = relationship("User", back_populates="created_terms")
+    source_relations = relationship("TermRelation", foreign_keys="TermRelation.source_term_id", back_populates="source_term")
+    target_relations = relationship("TermRelation", foreign_keys="TermRelation.target_term_id", back_populates="target_term")
+
+
+class TermRelation(Base):
+    """Relations between terms for ontology reasoning (transitive, symmetric, etc.)."""
+    __tablename__ = "term_relations"
+
+    id = Column(String, primary_key=True)
+    source_term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    target_term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    relation_type = Column(String, nullable=False, index=True)  # equivalent, related, broader, narrower, part_of, has_part
+    confidence = Column(Float, nullable=False, default=1.0)  # 0.0 to 1.0
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    metadata = Column(Text, nullable=True)  # JSON for additional context
+
+    # Relationships
+    source_term = relationship("Term", foreign_keys=[source_term_id], back_populates="source_relations")
+    target_term = relationship("Term", foreign_keys=[target_term_id], back_populates="target_relations")
+    creator = relationship("User")
 
 
 class OnboardingSession(Base):
