@@ -12,6 +12,7 @@ from sqlalchemy import (
     Table,
     Boolean,
     Integer,
+    Float,
     Enum as SQLEnum,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -203,7 +204,7 @@ class TermRelation(Base):
     confidence = Column(Float, nullable=False, default=1.0)  # 0.0 to 1.0
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(Text, nullable=True)  # JSON for additional context
+    relation_metadata = Column(Text, nullable=True)  # JSON for additional context
 
     # Relationships
     source_term = relationship("Term", foreign_keys=[source_term_id], back_populates="source_relations")
