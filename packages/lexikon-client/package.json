@@ -1,54 +1,39 @@
 {
-  "name": "@lexikon/client",
-  "version": "0.1.0",
-  "description": "TypeScript HTTP client for Lexikon REST API - Vocabulary management and ontology reasoning",
+  "name": "@cognitive-twin/lexikon-client",
+  "version": "0.5.0",
+  "description": "Type-safe HTTP client for Lexikon REST APIs - Semantic Search, Ontology Reasoning, Vocabulary Extraction, HITL Workflow, and Analytics",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch",
+    "watch": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint src --ext .ts",
-    "type-check": "tsc --noEmit"
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "keywords": [
     "lexikon",
-    "vocabulary",
     "ontology",
     "semantic-search",
-    "typescript",
+    "vocabulary",
+    "knowledge-graph",
     "http-client"
   ],
-  "author": "Lexikon Team",
-  "license": "AGPL-3.0",
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0",
-    "ts-jest": "^29.0.0",
-    "eslint": "^8.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ccolleatte/lexikon"
-  },
-  "bugs": {
-    "url": "https://github.com/ccolleatte/lexikon/issues"
-  },
-  "homepage": "https://github.com/ccolleatte/lexikon"
+  "author": "Lexikon Contributors",
+  "license": "AGPL-3.0"
 }

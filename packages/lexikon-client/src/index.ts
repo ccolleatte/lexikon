@@ -1,2 +1,6 @@
-// Main entry point - re-export from parent lexikon-client.ts
-export * from '../lexikon-client';
+/**
+ * Lexikon Client - Main export
+ * Re-exports all types and the main LexikonClient class
+ */
+
+export * from './LexikonClient';
