@@ -90,12 +90,15 @@ async def shutdown_event():
         logger.error(f"Error during shutdown: {e}")
 
 # Include routers
-from api import ontology
+from api import ontology, vocabularies, analytics, hitl
 
 app.include_router(onboarding.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(terms.router, prefix="/api")
 app.include_router(ontology.router, prefix="/api")
+app.include_router(vocabularies.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(hitl.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 
 

@@ -211,6 +211,27 @@ class TermRelation(Base):
     creator = relationship("User")
 
 
+class HITLReview(Base):
+    """Human-in-the-Loop review queue for quality validation."""
+    __tablename__ = "hitl_reviews"
+
+    id = Column(String, primary_key=True)
+    term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    review_type = Column(String, nullable=False)  # relation_quality, term_clarity, embedding_accuracy
+    status = Column(String, nullable=False, default="pending")  # pending, approved, rejected, skipped
+    feedback = Column(Text, nullable=True)
+    confidence_score = Column(Float, nullable=True)  # Reviewer's confidence in their judgment
+    created_at = Column(DateTime, server_default=func.now())
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by = Column(String, ForeignKey("users.id"), nullable=True)  # Who performed the review
+
+    # Relationships
+    term = relationship("Term", foreign_keys=[term_id])
+    requester = relationship("User", foreign_keys=[user_id])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+
+
 class OnboardingSession(Base):
     __tablename__ = "onboarding_sessions"
 

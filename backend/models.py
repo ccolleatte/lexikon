@@ -207,6 +207,48 @@ class InferenceResponse(BaseModel):
     execution_time_ms: Optional[float] = None
 
 
+# Vocabulary Extraction Models
+class ExtractedTermItem(BaseModel):
+    text: str
+    definition: Optional[str] = None
+    pattern: str
+    confidence: float
+
+
+class ExtractionRequest(BaseModel):
+    content: str = Field(..., min_length=10, max_length=100000)
+    patterns: Optional[list[str]] = None  # parentheses, bold, glossary, inline_definition
+    language: str = Field(default="fr", pattern="^(fr|en|es)$")
+
+
+class ExtractionResponse(BaseModel):
+    extracted_terms: list[ExtractedTermItem]
+    total: int
+    patterns_used: list[str]
+    execution_time_ms: Optional[float] = None
+
+
+# Bulk Import Models
+class BulkImportRequest(BaseModel):
+    content: str = Field(..., min_length=1)
+    format: str = Field(..., pattern="^(json|csv|skos)$")
+    mode: str = Field(default="upsert", pattern="^(create_only|update_only|upsert)$")
+
+
+class ImportStats(BaseModel):
+    created: int
+    updated: int
+    skipped: int
+    total: int
+
+
+class BulkImportResponse(BaseModel):
+    success: bool
+    stats: ImportStats
+    errors: Optional[list[dict]] = None
+    execution_time_ms: Optional[float] = None
+
+
 # API Response Wrapper
 class ApiResponse(BaseModel):
     success: bool
