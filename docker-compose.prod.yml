@@ -151,6 +151,29 @@ services:
     networks:
       - lexikon-network
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: lexikon-uptime-kuma
+    restart: always
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    environment:
+      - TZ=Europe/Paris
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - lexikon-network
+
   nginx:
     image: nginx:alpine
     container_name: lexikon-nginx
@@ -166,6 +189,7 @@ services:
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
+      - uptime-kuma
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -183,6 +207,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  uptime-kuma-data:
     driver: local
 
 networks:

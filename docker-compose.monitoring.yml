@@ -6,11 +6,13 @@ services:
     container_name: lexikon-uptime-kuma
     restart: always
     ports:
-      - "127.0.0.1:3001:3001"
+      - "3001:3001"
     volumes:
       - uptime-kuma-data:/app/data
     networks:
       - lexikon-network
+    expose:
+      - "3001"
     environment:
       - TZ=Europe/Paris
     healthcheck:
