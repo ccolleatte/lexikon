@@ -1,0 +1,44 @@
+# Build directories
+node_modules/
+.svelte-kit/
+dist/
+build/
+.next/
+out/
+
+# Python environments
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files (don't scan test code for security, tests already reviewed)
+*.test.ts
+*.spec.ts
+*.test.js
+*.spec.js
+test_*.py
+*_test.py
+
+# Configuration files (low risk)
+*.config.js
+*.config.ts
+*.config.json
+jest.config.js
+vitest.config.ts
+
+# Dependencies (already scanned separately)
+.yarn/
+pip-cache/
+
+# CI/CD (already trusted)
+.github/workflows/
+
+# Temporary/generated files
+.DS_Store
+.env.local
+.env.*.local
+*.tmp

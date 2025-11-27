@@ -49,3 +49,6 @@ httpx==0.25.1
 
 # Logging
 python-json-logger==2.0.7
+
+# Security Scanning & Audit
+pip-audit>=2.6.0

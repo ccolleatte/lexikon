@@ -106,6 +106,83 @@ git pull origin develop
 
 ---
 
+## ✅ Testing
+
+### Running Tests Locally
+
+```bash
+# Frontend tests (Vitest)
+npm run test              # Run all tests
+npm run test:coverage     # With coverage report (must be 80%+)
+npm run test:watch        # Watch mode
+
+# E2E tests (Playwright)
+npm run test:e2e          # Run all E2E tests
+npm run test:e2e:ui       # Interactive UI mode
+npm run test:e2e:smoke    # Smoke tests only (fast)
+
+# Backend tests (Pytest)
+cd backend
+pytest                    # Run all tests
+pytest --cov=src         # With coverage
+pytest -q               # Quick mode
+
+# Type checking
+npm run check             # TypeScript check (frontend)
+cd backend && mypy .     # Python type check
+```
+
+### CI/CD Test Pipeline
+
+Tests run automatically on:
+- **Every PR** to `develop` or `master`
+- **Every push** to `develop`
+- **Scheduled** nightly (full regression suite)
+
+**Required passing checks before merge:**
+- ✅ `test-and-lint` (Frontend: lint, test, coverage)
+- ✅ `backend-test` (Backend: lint, test, coverage, types)
+- ✅ `e2e-tests` (Smoke tests with full stack)
+- ✅ `security` (Semgrep SAST, dependency audit)
+
+---
+
+## 🔒 Security
+
+### Security Scanning
+
+Automated security scanning runs on every PR and daily:
+
+| Tool | Purpose | Severity |
+|------|---------|----------|
+| **Semgrep** | SAST - Code vulnerability detection | ❌ Fails on HIGH+ |
+| **Dependabot** | Vulnerable dependency detection | ⚠️ Auto-creates PRs |
+| **npm audit** | Frontend dependency scan | ❌ Fails on HIGH+ |
+| **pip-audit** | Backend dependency scan | ❌ Fails on any |
+
+**View Results:**
+- GitHub **Code Security & Analysis** tab
+- Semgrep findings linked in PR comments
+- Dependabot creates separate PRs for updates
+
+### Fixing Vulnerabilities
+
+```bash
+# Frontend
+npm audit                 # Identify vulnerabilities
+npm audit fix            # Auto-fix safe updates
+npm audit fix --force    # Force-fix (test required!)
+
+# Backend
+cd backend
+pip-audit                # Identify vulnerabilities
+pip install package-name --upgrade  # Manual update
+```
+
+**Full guide:** See [`docs/security/SECURITY_SCANNING.md`](docs/security/SECURITY_SCANNING.md)
+
+---
+
 ## 📌 Vision
 
 Lexikon vise à créer une **couche sémantique universelle** capable de :
