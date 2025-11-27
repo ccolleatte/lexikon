@@ -30,4 +30,5 @@ volumes:
 
 networks:
   lexikon-network:
+    name: lexikon_lexikon-network
     external: true
