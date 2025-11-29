@@ -16,9 +16,9 @@ alembic==1.12.1
 pgvector==0.2.4
 
 # Embeddings & Vector Search
-sentence-transformers==2.2.2
-torch==2.1.1
-numpy==1.26.3
+sentence-transformers==2.7.0
+torch==2.2.0+cpu
+numpy==1.26.4
 
 # Database - Neo4j
 neo4j==5.14.1

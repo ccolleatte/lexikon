@@ -2,6 +2,11 @@
 
 This guide explains how to deploy Lexikon in production.
 
+> **⚠️ Deployment Mode Selection**: Choose the appropriate guide based on your server setup:
+> - **Standalone Server** (Lexikon only) → Continue with this guide
+> - **Multi-Tenant Server** (Multiple apps) → See [DEPLOYMENT_MULTI_TENANT.md](DEPLOYMENT_MULTI_TENANT.md)
+> - **Server-Specific Setup** (chessplorer.com example) → See [README.SERVER_SPECIFIC.md](README.SERVER_SPECIFIC.md)
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
@@ -250,9 +255,12 @@ Optional Monitoring:
 ### Database Optimization
 
 For production workloads, consider:
-- Increase PostgreSQL shared_buffers
-- Enable connection pooling
-- Configure appropriate work_mem
+- **Connection Pooling**: Enabled by default (pool_size=20, max_overflow=10)
+- **Pool Pre-Ping**: Checks connection health before reuse
+- **Pool Recycle**: Recycles connections after 1 hour (prevents stale connections)
+- **SQLAlchemy Echo**: Disabled in production (50-80% performance gain)
+
+See `backend/db/postgres.py` for configuration details.
 
 ### Redis Configuration
 
@@ -262,10 +270,48 @@ For production workloads, consider:
 
 ### Frontend/Backend
 
-- Backend uses uvicorn workers (can be scaled)
-- Frontend SSR is optimized with SvelteKit adapter-node
-- Static assets are served with appropriate caching headers
+- **Backend Workers**: Uvicorn workers configurable via `UVICORN_WORKERS` env var (default: 4)
+- **Worker Formula**: Recommended `(2 × CPU_cores) + 1`
+- **Frontend SSR**: Optimized with SvelteKit adapter-node, includes 60s startup period
+- **Static Assets**: Served with appropriate caching headers
+
+### Production Environment Variables
+
+```bash
+# Uvicorn Configuration (optional, defaults shown)
+UVICORN_WORKERS=4                    # (2 × CPU_cores) + 1
+UVICORN_TIMEOUT=120                  # WebSocket timeout (seconds)
+UVICORN_GRACEFUL_TIMEOUT=30          # Graceful shutdown timeout
+UVICORN_KEEP_ALIVE=30                # HTTP keep-alive timeout
+```
+
+## 8. Production Optimizations
+
+Lexikon includes several production-grade optimizations:
+
+### Backend Optimizations
+- **PostgreSQL Connection Pooling**: 20-connection pool with auto-recycle prevents connection exhaustion
+- **SQLAlchemy Performance**: SQL logging disabled in production (`echo=False`)
+- **Uvicorn Scaling**: Dynamic worker count via environment variables
+- **Graceful Shutdown**: 30-second timeout for in-flight requests before force-kill
+- **Rate Limiting**: Includes HTTP headers (X-RateLimit-*, Retry-After) for client visibility
+
+### Docker Optimizations
+- **Multi-Stage Builds**: Reduces image size and attack surface
+- **PyTorch CPU-Only**: Saves ~4GB vs CUDA variant (smaller image, suitable for CPU servers)
+- **Non-Root User**: Lexikon user (UID 1000) for improved security
+
+### Monitoring & Observability
+- **Metrics Endpoint**: `/metrics` returns system health data (requests, cache hits, queries)
+- **Structured Logging**: JSON-formatted logs for centralized analysis
+- **Health Checks**: Endpoint-based health checks with proper timeouts
+
+### Memory Management
+- **Memory Limits**: Container limits prevent resource monopolization on shared servers
+- **Memory Reservation**: Guarantees minimum resources for stable cohabitation
+
+For detailed optimization discussion, see the commit history and [DEPLOYMENT_MULTI_TENANT.md](DEPLOYMENT_MULTI_TENANT.md#performance-considerations).
 
 ---
 
-**Need help?** Check the [monitoring guide](monitoring/MONITORING_SETUP_HIGH.md) or create an issue on GitHub.
+**Need help?** Check the [monitoring guide](monitoring/MONITORING_SETUP_HIGH.md), [DEPLOYMENT_MULTI_TENANT.md](DEPLOYMENT_MULTI_TENANT.md) for shared servers, or create an issue on GitHub.
