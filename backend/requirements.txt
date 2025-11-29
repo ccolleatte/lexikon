@@ -21,7 +21,7 @@ torch==2.2.0+cpu
 numpy==1.26.4
 
 # Database - Neo4j
-neo4j==5.14.1
+neo4j==6.0.3
 
 # Authentication
 python-jose[cryptography]==3.3.0
