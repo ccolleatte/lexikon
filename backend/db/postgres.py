@@ -28,12 +28,28 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL", "sqlite:///./lexikon.db"
 )
 
-# Create engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=True,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+# Determine if we're in production
+IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
+
+# Create engine with optimized connection pooling
+if "postgresql" in DATABASE_URL:
+    # PostgreSQL connection pooling
+    engine = create_engine(
+        DATABASE_URL,
+        echo=not IS_PRODUCTION,  # Disable SQL logging in production
+        pool_size=20,  # Connection pool size (10-20 for PostgreSQL production)
+        max_overflow=10,  # Additional connections above pool_size
+        pool_pre_ping=True,  # Verify connections before reusing them
+        pool_recycle=3600,  # Recycle connections every hour to avoid stale connections
+        connect_args={"connect_timeout": 10},  # PostgreSQL connection timeout
+    )
+else:
+    # SQLite connection (single-threaded)
+    engine = create_engine(
+        DATABASE_URL,
+        echo=not IS_PRODUCTION,
+        connect_args={"check_same_thread": False},
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

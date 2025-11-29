@@ -119,6 +119,13 @@ async def health():
     return {"status": "healthy"}
 
 
+@app.get("/metrics")
+async def metrics():
+    """Metrics endpoint for monitoring"""
+    from logging_config import get_metrics
+    return get_metrics()
+
+
 if __name__ == "__main__":
     import uvicorn
 
