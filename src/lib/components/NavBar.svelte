@@ -2,6 +2,8 @@
 	import { isAuthenticated, user } from '$lib/stores/auth';
 	import { logout } from '$lib/utils/auth';
 	import Button from './Button.svelte';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
+	import { t } from 'svelte-i18n';
 
 	let showUserMenu = false;
 
@@ -44,20 +46,21 @@
 							href="/terms"
 							class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 hover:text-primary-600"
 						>
-							My Terms
+							{$t('nav.myTerms')}
 						</a>
 						<a
 							href="/terms/new"
 							class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 hover:text-primary-600"
 						>
-							Create Term
+							{$t('nav.createTerm')}
 						</a>
 					</div>
 				{/if}
 			</div>
 
 			<!-- Right side -->
-			<div class="flex items-center">
+			<div class="flex items-center gap-4">
+				<LanguageSwitcher />
 				{#if $isAuthenticated && $user}
 					<!-- User menu -->
 					<div class="relative user-menu-container">
@@ -99,7 +102,7 @@
 									class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 								>
 									<span class="inline-block w-5">👤</span>
-									My Profile
+									{$t('nav.myProfile')}
 								</a>
 
 								<a
@@ -108,7 +111,7 @@
 									class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 								>
 									<span class="inline-block w-5">📚</span>
-									My Terms
+									{$t('nav.myTerms')}
 								</a>
 
 								<div class="border-t border-gray-200 my-1"></div>
@@ -118,7 +121,7 @@
 									class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
 								>
 									<span class="inline-block w-5">🚪</span>
-									Sign out
+									{$t('nav.signOut')}
 								</button>
 							</div>
 						{/if}
@@ -127,10 +130,10 @@
 					<!-- Guest buttons -->
 					<div class="flex items-center gap-2">
 						<Button href="/login" variant="ghost" size="sm">
-							Sign in
+							{$t('nav.signIn')}
 						</Button>
 						<Button href="/register" variant="primary" size="sm">
-							Get started
+							{$t('nav.getStarted')}
 						</Button>
 					</div>
 				{/if}

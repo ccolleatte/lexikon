@@ -27,6 +27,11 @@ from auth.jwt import (
 )
 from auth.middleware import get_current_user, AuthenticationError
 from auth.api_keys import create_api_key, list_api_keys, revoke_api_key
+from auth.oauth import (
+    oauth,
+    handle_oauth_callback,
+    OAuthProviderError,
+)
 from models import ApiResponse
 from middleware.rate_limit import limiter, RATE_LIMIT_AUTH, RATE_LIMIT_API
 
@@ -580,3 +585,103 @@ async def revoke_user_api_key(
         success=True,
         data={"message": "API key revoked successfully"},
     )
+
+
+# OAuth Routes
+
+@router.get("/oauth/google")
+async def oauth_google_initiate(request):
+    """
+    Initiate Google OAuth flow.
+
+    Redirects user to Google login consent screen.
+
+    Returns:
+        Redirect to Google OAuth authorization endpoint
+    """
+    redirect_uri = request.url_for("oauth_google_callback")
+    try:
+        return await oauth.google.authorize_redirect(request, redirect_uri)
+    except AttributeError:
+        logger.error("Google OAuth not configured (missing GOOGLE_CLIENT_ID/SECRET)")
+        raise HTTPException(
+            status_code=503,
+            detail="Google OAuth not configured"
+        )
+
+
+@router.post("/oauth/google/callback")
+async def oauth_google_callback(request, db: Session = Depends(get_db)):
+    """
+    Handle Google OAuth callback.
+
+    Receives authorization code from Google, exchanges it for tokens,
+    and creates/logs in user.
+
+    Returns:
+        JSON with JWT tokens and user info
+
+    Raises:
+        400 Bad Request: Invalid authorization code
+        503 Service Unavailable: Google OAuth not configured
+    """
+    try:
+        # Get authorization code from query params
+        code = request.query_params.get("code")
+        state = request.query_params.get("state")
+        error = request.query_params.get("error")
+
+        # Handle OAuth errors
+        if error:
+            logger.warning(f"Google OAuth error: {error}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"OAuth error: {error}"
+            )
+
+        if not code:
+            logger.warning("Google OAuth callback: missing authorization code")
+            raise HTTPException(
+                status_code=400,
+                detail="Missing authorization code"
+            )
+
+        # Exchange code for token
+        token = await oauth.google.authorize_access_token(request)
+
+        # Get user info from token
+        user_info = token.get("userinfo")
+        if not user_info:
+            logger.error("Google OAuth: no userinfo in token")
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to get user information from Google"
+            )
+
+        # Handle OAuth callback and create/login user
+        result = await handle_oauth_callback(
+            db=db,
+            provider="google",
+            user_info=user_info,
+            token=token
+        )
+
+        logger.info(f"Google OAuth successful for user {result['user']['email']}")
+
+        return ApiResponse(
+            success=True,
+            data=result
+        )
+
+    except OAuthProviderError as e:
+        logger.error(f"Google OAuth provider error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except AttributeError:
+        logger.error("Google OAuth not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="Google OAuth not configured"
+        )
+    except Exception as e:
+        logger.error(f"Google OAuth callback error: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="OAuth processing failed")
