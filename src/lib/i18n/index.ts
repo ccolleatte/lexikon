@@ -5,7 +5,7 @@ register('fr', () => import('./locales/fr.json'));
 register('en', () => import('./locales/en.json'));
 
 // Initialize i18n
-init({
+export default init({
   fallbackLocale: 'fr',
   initialLocale: getLocaleFromNavigator() || 'fr',
   formats: {
