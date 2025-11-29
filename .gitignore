@@ -92,3 +92,4 @@ playwright-report/
 playwright/.cache/
 .playwright/
 .env.e2e
+_docs/20251126_Integration_Plan_Phase1-2-3.md
