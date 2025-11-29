@@ -44,7 +44,7 @@ jobs:
 
       - name: Comment PR with Semgrep results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -124,7 +124,7 @@ jobs:
 
       - name: Parse npm audit results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -186,7 +186,7 @@ jobs:
 
       - name: Parse pip audit results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
