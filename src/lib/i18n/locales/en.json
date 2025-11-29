@@ -50,7 +50,11 @@
     "agreeToTerms": "By signing in, you agree to our",
     "termsOfService": "Terms of Service",
     "and": "and",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "passwordHint": "At least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "creatingAccount": "Creating account...",
+    "orSignUpWith": "Or sign up with"
   },
   "terms": {
     "title": "My terms",
