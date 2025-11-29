@@ -12,6 +12,7 @@ from sqlalchemy import (
     Table,
     Boolean,
     Integer,
+    Float,
     Enum as SQLEnum,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,12 +28,28 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL", "sqlite:///./lexikon.db"
 )
 
-# Create engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=True,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+# Determine if we're in production
+IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
+
+# Create engine with optimized connection pooling
+if "postgresql" in DATABASE_URL:
+    # PostgreSQL connection pooling
+    engine = create_engine(
+        DATABASE_URL,
+        echo=not IS_PRODUCTION,  # Disable SQL logging in production
+        pool_size=20,  # Connection pool size (10-20 for PostgreSQL production)
+        max_overflow=10,  # Additional connections above pool_size
+        pool_pre_ping=True,  # Verify connections before reusing them
+        pool_recycle=3600,  # Recycle connections every hour to avoid stale connections
+        connect_args={"connect_timeout": 10},  # PostgreSQL connection timeout
+    )
+else:
+    # SQLite connection (single-threaded)
+    engine = create_engine(
+        DATABASE_URL,
+        echo=not IS_PRODUCTION,
+        connect_args={"check_same_thread": False},
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -178,6 +195,9 @@ class Term(Base):
     citations = Column(Text, nullable=True)  # JSON array
     term_metadata = Column(Text, nullable=True)  # JSON object
 
+    # Semantic search: Vector embedding for similarity search
+    embedding = Column(Text, nullable=True)  # JSON serialized list of floats (for SQLite compatibility)
+
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -185,6 +205,48 @@ class Term(Base):
     # Relationships
     project = relationship("Project", back_populates="terms")
     creator = relationship("User", back_populates="created_terms")
+    source_relations = relationship("TermRelation", foreign_keys="TermRelation.source_term_id", back_populates="source_term")
+    target_relations = relationship("TermRelation", foreign_keys="TermRelation.target_term_id", back_populates="target_term")
+
+
+class TermRelation(Base):
+    """Relations between terms for ontology reasoning (transitive, symmetric, etc.)."""
+    __tablename__ = "term_relations"
+
+    id = Column(String, primary_key=True)
+    source_term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    target_term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    relation_type = Column(String, nullable=False, index=True)  # equivalent, related, broader, narrower, part_of, has_part
+    confidence = Column(Float, nullable=False, default=1.0)  # 0.0 to 1.0
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    relation_metadata = Column(Text, nullable=True)  # JSON for additional context
+
+    # Relationships
+    source_term = relationship("Term", foreign_keys=[source_term_id], back_populates="source_relations")
+    target_term = relationship("Term", foreign_keys=[target_term_id], back_populates="target_relations")
+    creator = relationship("User")
+
+
+class HITLReview(Base):
+    """Human-in-the-Loop review queue for quality validation."""
+    __tablename__ = "hitl_reviews"
+
+    id = Column(String, primary_key=True)
+    term_id = Column(String, ForeignKey("terms.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    review_type = Column(String, nullable=False)  # relation_quality, term_clarity, embedding_accuracy
+    status = Column(String, nullable=False, default="pending")  # pending, approved, rejected, skipped
+    feedback = Column(Text, nullable=True)
+    confidence_score = Column(Float, nullable=True)  # Reviewer's confidence in their judgment
+    created_at = Column(DateTime, server_default=func.now())
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by = Column(String, ForeignKey("users.id"), nullable=True)  # Who performed the review
+
+    # Relationships
+    term = relationship("Term", foreign_keys=[term_id])
+    requester = relationship("User", foreign_keys=[user_id])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
 
 
 class OnboardingSession(Base):

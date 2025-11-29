@@ -7,8 +7,7 @@
 *.env.prod
 # Exception: .env.prod.example is a template (not a secret)
 !.env.prod.example
-# But still ignore .env.*.example (other examples)
-.env.*.example
+!.env.e2e.example
 # Ignore generated config files
 .env.prod.generated
 .env.*.generated
@@ -76,9 +75,20 @@ coverage/
 *.lcov
 test-results/
 
+# Database files (local development)
+*.db
+*.sqlite
+*.sqlite3
+
 # Temporary
 tmp/
 temp/
 *.tmp
 .svelte-kit/
 .turbo/
+
+# Playwright E2E Tests
+playwright-report/
+playwright/.cache/
+.playwright/
+.env.e2e

@@ -1,0 +1,39 @@
+{
+  "name": "@cognitive-twin/lexikon-client",
+  "version": "0.5.0",
+  "description": "Type-safe HTTP client for Lexikon REST APIs - Semantic Search, Ontology Reasoning, Vocabulary Extraction, HITL Workflow, and Analytics",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "lexikon",
+    "ontology",
+    "semantic-search",
+    "vocabulary",
+    "knowledge-graph",
+    "http-client"
+  ],
+  "author": "Lexikon Contributors",
+  "license": "AGPL-3.0"
+}

@@ -1,0 +1,216 @@
+================================================================================
+LEXIKON VPS - COPY & PASTE COMMANDS
+================================================================================
+
+USE THIS when you access your VPS terminal/console directly
+(Browser console, VPS control panel, or direct terminal access)
+
+================================================================================
+STEP 1: Update code from git
+================================================================================
+
+cd /opt/lexikon
+git fetch origin
+git pull origin develop
+
+================================================================================
+STEP 2: Deploy
+================================================================================
+
+./deploy.sh
+
+Wait for completion. Should see:
+✅ Backend tests PASSED
+✅ All health checks passed
+
+If it fails, run: ./rollback.sh
+
+================================================================================
+STEP 3: Verify deployment (RUN THIS AFTER DEPLOY)
+================================================================================
+
+./post-deploy-check.sh
+
+Should show:
+✅ ALL CHECKS PASSED
+Success rate: 100%
+
+If any RED, run: ./rollback.sh
+
+================================================================================
+QUICK MANUAL CHECKS (if script doesn't work)
+================================================================================
+
+Check containers are running:
+docker-compose -f docker-compose.prod.yml ps
+
+Check backend is healthy:
+curl http://127.0.0.1:8000/health
+
+Check frontend is running:
+curl http://127.0.0.1:3000/
+
+Check Nginx proxy:
+curl http://127.0.0.1:8080/health
+
+Check database:
+docker exec lexikon-postgres psql -U postgres -c "SELECT version();"
+
+Check Redis:
+docker exec lexikon-redis redis-cli ping
+
+================================================================================
+IF SOMETHING BREAKS - ROLLBACK
+================================================================================
+
+./rollback.sh
+
+Then run verification again:
+./post-deploy-check.sh
+
+================================================================================
+VIEW LOGS (if troubleshooting)
+================================================================================
+
+Backend logs:
+docker logs -f lexikon-backend
+
+Frontend logs:
+docker logs -f lexikon-frontend
+
+Nginx logs:
+docker logs -f lexikon-nginx
+
+Database logs:
+docker logs -f lexikon-postgres
+
+(Press Ctrl+C to exit)
+
+================================================================================
+TYPICAL WORKFLOW
+================================================================================
+
+1. Pull code:
+   cd /opt/lexikon && git pull origin develop
+
+2. Deploy:
+   ./deploy.sh
+
+3. Verify:
+   ./post-deploy-check.sh
+
+4. If ✅ all green → You're done! Production updated
+5. If ❌ any red → ./rollback.sh
+
+================================================================================
+COMMON ISSUES & FIXES
+================================================================================
+
+Issue: Backend container not starting
+Fix:
+  docker logs lexikon-backend
+  ./rollback.sh
+
+Issue: Frontend showing blank page
+Fix:
+  docker logs lexikon-frontend
+  curl http://127.0.0.1:3000/
+
+Issue: API calls returning errors
+Fix:
+  docker logs lexikon-backend
+  docker exec lexikon-postgres psql -U postgres -c "SELECT COUNT(*) FROM users;"
+
+Issue: Tests failed during deploy
+Fix:
+  ./rollback.sh
+  Check code locally
+  Fix issue on develop branch
+  Push to git
+  Try deploy again
+
+================================================================================
+HTTPS CHECK (from your local computer)
+================================================================================
+
+curl -I https://lexikon.chessplorer.com
+
+Should return: HTTP/2 200
+
+================================================================================
+MONITORING ACCESS
+================================================================================
+
+View Uptime Kuma:
+https://lexikon.chessplorer.com/monitoring/
+
+Or check via CLI:
+curl http://127.0.0.1:3001/
+
+================================================================================
+CONTAINER MANAGEMENT
+================================================================================
+
+Restart all containers:
+cd /opt/lexikon && docker-compose -f docker-compose.prod.yml restart
+
+Stop all containers:
+docker-compose -f docker-compose.prod.yml down
+
+Start all containers:
+docker-compose -f docker-compose.prod.yml up -d
+
+View all containers:
+docker ps
+
+View container resource usage:
+docker stats
+
+================================================================================
+DATABASE BACKUP/RESTORE (if needed)
+================================================================================
+
+See available backups:
+ls -lh /opt/lexikon-backups/
+
+Backups are created automatically before each deploy
+
+================================================================================
+CERTIFICATE CHECK
+================================================================================
+
+Check SSL certificate expiration:
+echo | openssl s_client -servername lexikon.chessplorer.com -connect lexikon.chessplorer.com:443 2>/dev/null | grep "notAfter"
+
+Renew certificate if needed:
+certbot renew --force-renewal
+
+================================================================================
+PERFORMANCE MONITORING
+================================================================================
+
+Real-time container stats:
+docker stats
+
+Check disk space:
+df -h
+
+Check memory usage:
+free -h
+
+Check CPU usage:
+top
+
+(Press q to exit top)
+
+================================================================================
+QUICK HEALTH CHECK (one-liner)
+================================================================================
+
+docker-compose -f docker-compose.prod.yml ps && curl -s http://127.0.0.1:8000/health | jq . && echo "✅ All systems operational"
+
+================================================================================
+For detailed documentation, see:
+- DEPLOYMENT_CHECKLIST_VPS.md (8 detailed checks with explanations)
+- VPS_QUICK_COMMANDS.md (comprehensive guide with all options)
+================================================================================
