@@ -74,8 +74,15 @@
 			</div>
 		</div>
 
-		<p class="text-sm text-gray-500 mt-12">
-			v0.1.0 - Sprint 1 Implementation
-		</p>
+		<div class="mt-12 pt-8 border-t border-gray-200">
+			<p class="text-sm text-gray-600 mb-4">
+				<a href="https://lexikon.chessplorer.com/docs" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">
+					Documentation API →
+				</a>
+			</p>
+			<p class="text-sm text-gray-500">
+				v0.1.0 - Sprint 1 Implementation
+			</p>
+		</div>
 	</div>
 </div>
