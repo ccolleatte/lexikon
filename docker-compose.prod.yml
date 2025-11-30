@@ -166,7 +166,7 @@ services:
     container_name: lexikon-uptime-kuma
     restart: always
     ports:
-      - "3001:3001"
+      - "3005:3001"
     volumes:
       - uptime-kuma-data:/app/data
     environment:
