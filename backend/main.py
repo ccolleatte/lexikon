@@ -7,6 +7,7 @@ import os
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
@@ -117,6 +118,30 @@ async def root():
 async def health():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def health_api():
+    """Health check endpoint (aliased under /api)"""
+    return await health()
+
+
+@app.get("/api/docs")
+async def docs_api():
+    """Redirect to /docs"""
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/api/openapi.json")
+async def openapi_api():
+    """Redirect to /openapi.json"""
+    return RedirectResponse(url="/openapi.json")
+
+
+@app.get("/api/redoc")
+async def redoc_api():
+    """Redirect to /redoc"""
+    return RedirectResponse(url="/redoc")
 
 
 @app.get("/metrics")
