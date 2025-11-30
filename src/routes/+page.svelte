@@ -2,7 +2,7 @@
 	import Button from '$components/Button.svelte';
 	import { isAuthenticated, user } from '$lib/stores/auth';
 
-	const apiDocsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/docs`;
+	const apiDocsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/docs`;
 </script>
 
 <svelte:head>
