@@ -63,6 +63,50 @@ Implémenter l'authentification Google fonctionnelle (actuellement placeholder)
 
 ---
 
+### Correction #4 - Google OAuth Flow (High Priority - Next Session)
+**Status:** Backlog (À faire après Correction #2 et #3)
+**URL:** Login/Register buttons "Continuer avec Google"
+
+**Contexte:**
+Implémenter la fonctionnalité complète "Continuer avec Google" (frontend + backend OAuth flow)
+
+**Flux utilisateur:**
+1. Utilisateur clique sur "Continuer avec Google" sur login ou register
+2. Redirection vers Google OAuth consent screen
+3. Utilisateur autorise l'app
+4. Google retourne un authorization code
+5. Backend traite le code → crée/met à jour l'utilisateur
+6. Frontend reçoit JWT + infos utilisateur
+7. Redirection vers `/terms` ou onboarding si premier login
+
+**Travail à faire:**
+- [ ] **Frontend:**
+  - [ ] Implémenter le bouton "Continuer avec Google" (utiliser @react-oauth/google ou équivalent Svelte)
+  - [ ] Gérer le callback du popup/redirect Google
+  - [ ] Passer le token Google au backend
+  - [ ] Gérer les erreurs d'authentification
+  - [ ] Redirection post-auth
+
+- [ ] **Backend:**
+  - [ ] Endpoint POST `/auth/google/callback` (accepte Google token)
+  - [ ] Vérifier le token Google (validation avec Google API)
+  - [ ] Créer/mettre à jour utilisateur en base (lookup par email Google)
+  - [ ] Générer JWT pour la session
+  - [ ] Gérer le cas première connexion (onboarding?)
+  - [ ] Gérer les erreurs (token invalide, email non trouvé, etc.)
+
+- [ ] **Configuration:**
+  - [ ] Ajouter Google Client ID à `.env.prod`
+  - [ ] Tester en local et en production
+
+**Points clés:**
+- Sécuriser la validation du token Google (ne pas faire confiance au client)
+- Rate limiting sur l'endpoint OAuth
+- Gérer les redirects correctement (popup vs redirect)
+- Test avec différents navigateurs
+
+---
+
 ## 📝 Notes Session Actuelle
 
 **Date:** 2025-11-30
