@@ -5,6 +5,11 @@
   - Capitalisation française appliquée à toute l'interface
   - Commit: 47d25c4
 
+- [x] **Correction #1.1 - API Documentation Link** (2025-11-30)
+  - Added link to API documentation on homepage footer
+  - Opens https://lexikon.chessplorer.com/docs in new tab
+  - Commit: d06032f
+
 ---
 
 ## 🔄 En Attente (Par Ordre de Priorité)
