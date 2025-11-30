@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Button from '$components/Button.svelte';
 	import { isAuthenticated, user } from '$lib/stores/auth';
+
+	const apiDocsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/docs`;
 </script>
 
 <svelte:head>
@@ -76,7 +78,7 @@
 
 		<div class="mt-12 pt-8 border-t border-gray-200">
 			<p class="text-sm text-gray-600 mb-4">
-				<a href="https://lexikon.chessplorer.com/docs" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">
+				<a href={apiDocsUrl} target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 font-medium">
 					Documentation API →
 				</a>
 			</p>
