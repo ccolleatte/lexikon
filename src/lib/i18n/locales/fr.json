@@ -1,7 +1,7 @@
 {
   "nav": {
     "myTerms": "Mes ontologies",
-    "createTerm": "Créer le terme",
+    "createTerm": "Créer un terme",
     "myProfile": "Mon profil",
     "signOut": "Se déconnecter",
     "signIn": "Se connecter",
@@ -62,8 +62,8 @@
     "createFirst": "Créer mon premier terme",
     "completeProfile": "Compléter mon profil",
     "subtitle": "Gérez vos ontologies et termes",
-    "create": "Créer le terme",
-    "createNew": "Créer le nouveau terme"
+    "create": "Créer un terme",
+    "createNew": "Créer un nouveau terme"
   },
   "profile": {
     "title": "Mon profil",
