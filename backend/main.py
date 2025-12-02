@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
-from api import onboarding, users, terms, auth
+from api import onboarding, users, terms, auth, projects
 from db.postgres import Base, engine
 from middleware.rate_limit import limiter
 from middleware.error_handler import setup_error_handlers
@@ -96,6 +96,7 @@ from api import ontology, vocabularies, analytics, hitl
 app.include_router(onboarding.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(terms.router, prefix="/api")
+app.include_router(projects.router, prefix="/api")
 app.include_router(ontology.router, prefix="/api")
 app.include_router(vocabularies.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
