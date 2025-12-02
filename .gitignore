@@ -1,0 +1,34 @@
+# Multi-project server - Exclude other projects
+chessplorer/
+n8n_data/
+
+# System configuration files (should not be in Lexikon repo)
+.bash_history
+.bashrc
+.profile
+.ssh/
+.git-credentials
+.gitconfig
+.docker/
+.config/
+.local/
+.npm/
+.cache/
+.wget-hsts
+.lesshst
+.viminfo
+.psql_history
+.selected_editor
+.cipher/
+
+# Claude Code local settings
+.claude.json
+.claude.json.backup
+.claude/
+
+# Temporary and archive files
+cleanup-maintenance.sh
+RATIONNALISATION-2025-12-02.md
+README-STRUCTURE.md
+
+# Lexikon project-specific exclusions are in lexikon/.gitignore
