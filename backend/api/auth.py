@@ -2,7 +2,7 @@
 Authentication API endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -146,8 +146,7 @@ class ApiKeyResponse(BaseModel):
 
 # Endpoints
 @router.post("/register", status_code=201)
-@limiter.limit(RATE_LIMIT_AUTH)
-async def register(request: RegisterRequest, db: Session = Depends(get_db)):
+async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     """
     Register a new user account.
 
@@ -199,34 +198,34 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
             }'
     """
     try:
-        logger.info(f"Register: Starting for {request.email}")
+        logger.info(f"Register: Starting for {payload.email}")
 
         # Check if email already exists
-        existing = db.query(User).filter(User.email == request.email).first()
+        existing = db.query(User).filter(User.email == payload.email).first()
         if existing:
-            logger.warning(f"Register: Email {request.email} already exists")
+            logger.warning(f"Register: Email {payload.email} already exists")
             return ApiResponse(
                 success=False,
                 error={
                     "code": "EMAIL_EXISTS",
                     "message": "This email is already registered",
-                    "details": {"email": request.email},
+                    "details": {"email": payload.email},
                 },
             )
 
-        logger.info(f"Register: Hashing password for {request.email}")
+        logger.info(f"Register: Hashing password for {payload.email}")
         # Hash password
-        password_hash = hash_password(request.password)
+        password_hash = hash_password(payload.password)
         logger.info(f"Register: Password hashed successfully")
 
         # Create user
         user = User(
             id=str(uuid.uuid4()),
-            email=request.email,
+            email=payload.email,
             password_hash=password_hash,
-            first_name=request.first_name,
-            last_name=request.last_name,
-            language=request.language,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+            language=payload.language,
             adoption_level="quick-project",
             is_active=True,
         )
@@ -235,7 +234,7 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
-        logger.info(f"Register: User {request.email} saved to database")
+        logger.info(f"Register: User {payload.email} saved to database")
 
         # Generate tokens
         logger.info(f"Register: Generating tokens")
@@ -263,8 +262,7 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-@limiter.limit(RATE_LIMIT_AUTH)
-async def login(request: LoginRequest, db: Session = Depends(get_db)):
+async def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate user with email and password using constant-time verification.
 
@@ -317,7 +315,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """
 
     # Find user
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == payload.email).first()
 
     # Use a dummy hash for non-existent users to prevent timing attacks
     # This ensures password verification takes same time whether user exists or not
@@ -326,10 +324,10 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         # This hash is for a non-existent user and will always fail verification
         from passlib.context import CryptContext
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        dummy_hash = pwd_context.hash("dummy-password-" + request.email)
+        dummy_hash = pwd_context.hash("dummy-password-" + payload.email)
 
         # Always verify (takes constant time regardless of user existence)
-        verify_password(request.password, dummy_hash)
+        verify_password(payload.password, dummy_hash)
 
         # Always return same error message (don't leak user existence)
         return ApiResponse(
@@ -351,7 +349,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         )
 
     # Verify password using constant-time comparison (bcrypt handles this)
-    if not verify_password(request.password, user.password_hash):
+    if not verify_password(payload.password, user.password_hash):
         return ApiResponse(
             success=False,
             error={
@@ -590,7 +588,7 @@ async def revoke_user_api_key(
 # OAuth Routes
 
 @router.get("/oauth/google")
-async def oauth_google_initiate(request):
+async def oauth_google_initiate(request: Request):
     """
     Initiate Google OAuth flow.
 
@@ -611,7 +609,7 @@ async def oauth_google_initiate(request):
 
 
 @router.post("/oauth/google/callback")
-async def oauth_google_callback(request, db: Session = Depends(get_db)):
+async def oauth_google_callback(request: Request, db: Session = Depends(get_db)):
     """
     Handle Google OAuth callback.
 

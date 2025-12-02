@@ -229,8 +229,18 @@ async def validation_error_handler(request: Request, exc: ValidationError) -> JS
     # Extract field-level errors
     errors = {}
     for error in exc.errors():
-        field = ".".join(str(x) for x in error["loc"][1:])  # Skip request class name
+        # Safely handle location extraction - some errors (like JSON decode) have minimal location
+        loc = error.get("loc", [])
+        if len(loc) > 1:
+            field = ".".join(str(x) for x in loc[1:])  # Skip request class name
+        elif len(loc) > 0:
+            field = str(loc[0])  # Use first element if only one
+        else:
+            field = "unknown"
         errors[field] = error["msg"]
+
+        # Log raw errors for debugging
+        logger.debug(f"Validation error detail: {error}")
 
     logger.warning(
         "Validation error",
