@@ -685,4 +685,238 @@ async def oauth_google_callback(request: Request, db: Session = Depends(get_db))
         )
     except Exception as e:
         logger.error(f"Google OAuth callback error: {type(e).__name__}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="OAuth processing failed")
+
+
+# Email verification and password reset endpoints
+class ForgotPasswordRequest(BaseModel):
+    """Request model for forgot password."""
+    email: EmailStr
+
+    @validator("email", pre=True)
+    def validate_email(cls, v):
+        """Validate email format."""
+        if not v:
+            raise ValueError("Email cannot be empty")
+        return validate_email_format(v)
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request model for password reset."""
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+    @validator("new_password", pre=True)
+    def validate_password(cls, v):
+        """Validate password strength."""
+        if not v:
+            raise ValueError("Password cannot be empty")
+        return validate_password(v)
+
+
+class VerifyEmailRequest(BaseModel):
+    """Request model for email verification."""
+    token: str
+
+
+@router.post("/send-verification")
+@limiter.limit(RATE_LIMIT_AUTH)
+async def send_verification_email(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Send email verification link to current user."""
+    try:
+        logger.info(f"Sending verification email to {current_user.email}")
+
+        # Check if already verified
+        if current_user.email_verified:
+            return ApiResponse(
+                success=False,
+                error={
+                    "code": "ALREADY_VERIFIED",
+                    "message": "Votre email est déjà vérifié",
+                },
+            )
+
+        # Generate verification token
+        import secrets
+        from datetime import datetime, timedelta
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(days=1)
+
+        current_user.email_verification_token = token
+        current_user.email_verification_expires_at = expires_at
+
+        db.commit()
+
+        # Send email
+        from services.email import email_service
+
+        email_service.send_verification_email(
+            current_user.email,
+            current_user.first_name,
+            token
+        )
+
+        logger.info(f"Verification email sent to {current_user.email}")
+
+        return ApiResponse(
+            success=True,
+            data={"message": "Email de vérification envoyé"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error sending verification email: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
+
+
+@router.get("/verify-email")
+async def verify_email(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Verify user email with token."""
+    try:
+        logger.info(f"Verifying email with token: {token[:10]}...")
+
+        from datetime import datetime
+
+        # Find user with token
+        user = db.query(User).filter(
+            User.email_verification_token == token
+        ).first()
+
+        if not user:
+            raise HTTPException(status_code=400, detail="Token invalide ou expiré")
+
+        # Check if token expired
+        if user.email_verification_expires_at < datetime.utcnow():
+            user.email_verification_token = None
+            user.email_verification_expires_at = None
+            db.commit()
+            raise HTTPException(status_code=400, detail="Token expiré")
+
+        # Mark email as verified
+        user.email_verified = True
+        user.email_verification_token = None
+        user.email_verification_expires_at = None
+
+        db.commit()
+
+        logger.info(f"Email verified for user {user.email}")
+
+        return ApiResponse(
+            success=True,
+            data={"message": "Email vérifié avec succès"}
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error verifying email: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
+
+
+@router.post("/forgot-password")
+@limiter.limit(RATE_LIMIT_AUTH)
+async def forgot_password(
+    request: Request,
+    payload: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Request password reset link."""
+    try:
+        logger.info(f"Password reset requested for {payload.email}")
+
+        # Find user
+        user = db.query(User).filter(User.email == payload.email).first()
+
+        if not user:
+            # Don't reveal if user exists
+            return ApiResponse(
+                success=True,
+                data={"message": "Si le compte existe, un email de réinitialisation a été envoyé"}
+            )
+
+        # Generate reset token
+        import secrets
+        from datetime import datetime, timedelta
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+
+        user.password_reset_token = token
+        user.password_reset_expires_at = expires_at
+
+        db.commit()
+
+        # Send email
+        from services.email import email_service
+
+        email_service.send_password_reset_email(
+            user.email,
+            user.first_name,
+            token
+        )
+
+        logger.info(f"Password reset email sent to {user.email}")
+
+        return ApiResponse(
+            success=True,
+            data={"message": "Email de réinitialisation envoyé"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error in forgot password: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
+
+
+@router.post("/reset-password")
+@limiter.limit(RATE_LIMIT_AUTH)
+async def reset_password(
+    request: Request,
+    payload: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Reset password with token."""
+    try:
+        logger.info(f"Resetting password with token: {payload.token[:10]}...")
+
+        from datetime import datetime
+
+        # Find user with token
+        user = db.query(User).filter(
+            User.password_reset_token == payload.token
+        ).first()
+
+        if not user:
+            raise HTTPException(status_code=400, detail="Token invalide ou expiré")
+
+        # Check if token expired
+        if user.password_reset_expires_at < datetime.utcnow():
+            user.password_reset_token = None
+            user.password_reset_expires_at = None
+            db.commit()
+            raise HTTPException(status_code=400, detail="Token expiré")
+
+        # Update password
+        user.password_hash = hash_password(payload.new_password)
+        user.password_reset_token = None
+        user.password_reset_expires_at = None
+
+        db.commit()
+
+        logger.info(f"Password reset for user {user.email}")
+
+        return ApiResponse(
+            success=True,
+            data={"message": "Mot de passe réinitialisé avec succès"}
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error resetting password: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise

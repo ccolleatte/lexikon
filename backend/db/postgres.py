@@ -110,6 +110,16 @@ class User(Base):
         default=AdoptionLevelEnum.QUICK_PROJECT,
     )
     is_active = Column(Boolean, default=True)
+
+    # Email verification
+    email_verified = Column(Boolean, default=False)
+    email_verification_token = Column(String, nullable=True, unique=True)
+    email_verification_expires_at = Column(DateTime, nullable=True)
+
+    # Password reset
+    password_reset_token = Column(String, nullable=True, unique=True)
+    password_reset_expires_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
