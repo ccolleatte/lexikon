@@ -73,7 +73,7 @@ export async function logout(): Promise<void> {
 		console.error('Logout API error:', error);
 	} finally {
 		authStore.logout();
-		goto('/');
+		goto('/login');
 	}
 }
 
@@ -127,14 +127,13 @@ export async function changePassword(
  * OAuth login URLs
  */
 export const OAUTH_URLS = {
-	google: import.meta.env.VITE_GOOGLE_OAUTH_URL || '/auth/oauth/google',
-	github: import.meta.env.VITE_GITHUB_OAUTH_URL || '/auth/oauth/github'
+	google: import.meta.env.VITE_GOOGLE_OAUTH_URL || '/auth/oauth/google'
 };
 
 /**
  * Initiate OAuth login
  */
-export function loginWithOAuth(provider: 'google' | 'github'): void {
+export function loginWithOAuth(provider: 'google'): void {
 	const url = OAUTH_URLS[provider];
 	window.location.href = url;
 }

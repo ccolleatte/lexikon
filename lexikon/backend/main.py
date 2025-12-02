@@ -7,16 +7,44 @@ import os
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
-from api import onboarding, users, terms, auth
+from api import onboarding, users, terms, auth, projects
 from db.postgres import Base, engine
 from middleware.rate_limit import limiter
 from middleware.error_handler import setup_error_handlers
 from config.secrets_validator import validate_secrets, SecretValidationError, is_production
 
 logger = logging.getLogger(__name__)
+
+# Initialize Sentry for error tracking (optional in production)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN and is_production():
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                FastApiIntegration(),
+                SqlalchemyIntegration(),
+                LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+            ],
+            traces_sample_rate=0.1,  # 10% of transactions
+            profiles_sample_rate=0.01,  # 1% for profiling
+            environment=os.getenv("ENVIRONMENT", "production"),
+            release=os.getenv("APP_VERSION", "unknown"),
+        )
+        logger.info("✓ Sentry initialized for error tracking")
+    except ImportError:
+        logger.warning("Sentry SDK not installed. Error tracking disabled.")
+    except Exception as e:
+        logger.error(f"Failed to initialize Sentry: {e}")
 
 # Create FastAPI app
 app = FastAPI(
@@ -69,8 +97,8 @@ def startup_event():
         logger.error(f"Secret validation failed: {e}")
         raise
 
-    # Create database tables if they don't exist
-    Base.metadata.create_all(bind=engine)
+    # Create database tables if they don't exist (checkfirst=True prevents duplicate ENUM errors)
+    Base.metadata.create_all(bind=engine, checkfirst=True)
     logger.info("Application startup complete")
 
 
@@ -90,9 +118,16 @@ async def shutdown_event():
         logger.error(f"Error during shutdown: {e}")
 
 # Include routers
+from api import ontology, vocabularies, analytics, hitl
+
 app.include_router(onboarding.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(terms.router, prefix="/api")
+app.include_router(projects.router, prefix="/api")
+app.include_router(ontology.router, prefix="/api")
+app.include_router(vocabularies.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(hitl.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 
 
@@ -111,6 +146,37 @@ async def root():
 async def health():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def health_api():
+    """Health check endpoint (aliased under /api)"""
+    return await health()
+
+
+@app.get("/api/docs")
+async def docs_api():
+    """Redirect to /docs"""
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/api/openapi.json")
+async def openapi_api():
+    """Redirect to /openapi.json"""
+    return RedirectResponse(url="/openapi.json")
+
+
+@app.get("/api/redoc")
+async def redoc_api():
+    """Redirect to /redoc"""
+    return RedirectResponse(url="/redoc")
+
+
+@app.get("/metrics")
+async def metrics():
+    """Metrics endpoint for monitoring"""
+    from logging_config import get_metrics
+    return get_metrics()
 
 
 if __name__ == "__main__":

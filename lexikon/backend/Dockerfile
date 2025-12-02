@@ -1,6 +1,6 @@
 # Multi-stage build for optimized production image
 # Stage 1: Builder
-FROM python:3.13-slim as builder
+FROM python:3.12-slim as builder
 
 WORKDIR /build
 
@@ -16,10 +16,10 @@ COPY requirements.txt .
 # Install Python dependencies to a virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 # Install only runtime dependencies (not build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -54,7 +54,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Run application with timeouts
-# timeout-keep-alive: 30s - close idle connections
-# timeout-notify: 30s - graceful shutdown notification timeout
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--timeout-keep-alive", "30", "--timeout-notify", "30"]
+# Run application with optimized settings
+# Uses environment variables for dynamic configuration via sh -c
+CMD sh -c 'uvicorn main:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --workers "${UVICORN_WORKERS:-4}" \
+    --timeout-keep-alive "${UVICORN_KEEP_ALIVE:-30}"'

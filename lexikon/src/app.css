@@ -5,19 +5,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode configuration */
+:root.dark {
+	color-scheme: dark;
+}
+
 /* Global styles */
 @layer base {
 	body {
 		@apply font-sans text-gray-900 bg-gray-50;
+		transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+	}
+
+	:root.dark body {
+		@apply text-gray-100 bg-gray-950;
 	}
 
 	h1, h2, h3, h4, h5, h6 {
 		@apply font-semibold;
 	}
 
+	:root.dark h1,
+	:root.dark h2,
+	:root.dark h3,
+	:root.dark h4,
+	:root.dark h5,
+	:root.dark h6 {
+		@apply text-gray-100;
+	}
+
 	/* Remove default button styles */
 	button {
 		@apply font-sans;
+	}
+
+	/* Dark mode for common elements */
+	:root.dark a {
+		@apply text-primary-400 hover:text-primary-300;
+	}
+
+	:root.dark input,
+	:root.dark textarea,
+	:root.dark select {
+		@apply bg-gray-800 text-gray-100 border-gray-700;
+	}
+
+	:root.dark input::placeholder,
+	:root.dark textarea::placeholder {
+		@apply text-gray-500;
+	}
+
+	:root.dark .bg-white {
+		@apply dark:bg-gray-900;
+	}
+
+	:root.dark .border-gray-200 {
+		@apply dark:border-gray-800;
+	}
+
+	:root.dark .border-gray-300 {
+		@apply dark:border-gray-700;
+	}
+
+	:root.dark .text-gray-600 {
+		@apply dark:text-gray-400;
+	}
+
+	:root.dark .text-gray-700 {
+		@apply dark:text-gray-300;
+	}
+
+	:root.dark .bg-gray-50 {
+		@apply dark:bg-gray-900;
+	}
+
+	:root.dark .bg-gray-100 {
+		@apply dark:bg-gray-800;
+	}
+
+	:root.dark .hover\:bg-gray-100 {
+		@apply dark:hover:bg-gray-800;
+	}
+
+	:root.dark .shadow-sm {
+		@apply dark:shadow-gray-900;
+	}
+
+	:root.dark .shadow-lg {
+		@apply dark:shadow-gray-900;
 	}
 }
 

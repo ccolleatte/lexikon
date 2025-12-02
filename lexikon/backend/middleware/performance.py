@@ -39,8 +39,13 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         operation = f"{request.method} {request.url.path}"
         request_operation.set(operation)
 
-        # Get request size
-        request_size_bytes = len(await request.body()) if request.method != "GET" else 0
+        # Get request size (without consuming the body which breaks FastAPI parsing)
+        # For non-GET requests, try to get Content-Length header instead
+        request_size_bytes = 0
+        if request.method != "GET":
+            content_length = request.headers.get("content-length")
+            if content_length:
+                request_size_bytes = int(content_length)
 
         try:
             # Process request

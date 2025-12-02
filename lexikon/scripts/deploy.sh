@@ -148,22 +148,33 @@ build_images() {
     log_info "Building Docker images..."
 
     cd "$REPO_DIR"
-    docker-compose -f docker-compose.prod.yml build --no-cache backend
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache backend
 
     log_success "Docker images built"
 }
 
 run_tests() {
-    log_info "Running tests..."
+    log_info "Running backend tests..."
 
-    cd "$REPO_DIR/backend"
-    docker run --rm \
-        -v "$REPO_DIR/backend":/app \
-        --entrypoint pytest \
-        lexikon-backend:latest \
-        tests/ -v --tb=short
+    cd "$REPO_DIR"
 
-    log_success "All tests passed"
+    # Start postgres & redis for tests
+    log_info "Starting test databases..."
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d postgres redis
+
+    sleep 3
+
+    # Run pytest via docker-compose
+    log_info "Executing pytest suite..."
+    if docker-compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend \
+        pytest -v --tb=short backend/tests/ 2>&1 | tee /tmp/pytest.log; then
+        log_success "Backend tests PASSED ✓"
+        return 0
+    else
+        log_error "Backend tests FAILED - aborting deployment"
+        log_error "See /tmp/pytest.log for details"
+        return 1
+    fi
 }
 
 setup_ssl() {
@@ -185,7 +196,7 @@ start_services() {
     log_info "Starting services..."
 
     cd "$REPO_DIR"
-    docker-compose -f docker-compose.prod.yml up -d
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
     log_success "Services started"
 }
@@ -211,11 +222,36 @@ wait_for_health() {
 }
 
 verify_deployment() {
+
+run_e2e_tests() {
+    log_info "Running E2E smoke tests against production stack..."
+
+    cd "$REPO_DIR"
+
+    # Check if Playwright is installed
+    if ! npm list @playwright/test &> /dev/null; then
+        log_info "Installing Playwright..."
+        npm ci
+        npx playwright install chromium --with-deps
+    fi
+
+    # Run smoke tests only (fast validation)
+    log_info "Executing E2E smoke tests..."
+    if BASE_URL=http://localhost:8080 \
+       npm run test:e2e:smoke -- --project=chromium 2>&1 | tee /tmp/e2e-smoke.log; then
+        log_success "E2E smoke tests PASSED ✓"
+        return 0
+    else
+        log_warning "E2E smoke tests FAILED - see /tmp/e2e-smoke.log"
+        log_warning "Deployment continues (E2E is advisory, not blocking)"
+        return 0  # Non-blocking
+    fi
+}
     log_info "Verifying deployment..."
 
     # Check if all containers are running
     log_info "Checking container status..."
-    docker-compose -f "$REPO_DIR/docker-compose.prod.yml" ps
+    docker-compose -f "$REPO_DIR/docker-compose.prod.yml" --env-file .env.prod ps
 
     # Test API endpoint
     log_info "Testing API endpoint..."
@@ -228,11 +264,32 @@ verify_deployment() {
 
     # Check logs for errors
     log_info "Checking logs for errors..."
-    if docker-compose -f "$REPO_DIR/docker-compose.prod.yml" logs | grep -i error | head -5; then
+    if docker-compose -f "$REPO_DIR/docker-compose.prod.yml" --env-file .env.prod logs | grep -i error | head -5; then
         log_warning "Some errors found in logs (may be harmless)"
     fi
 
     log_success "Deployment verified"
+}
+
+setup_monitoring() {
+    log_info "Setting up Uptime Kuma monitoring..."
+
+    cd "$REPO_DIR"
+
+    # Start Uptime Kuma container
+    if docker-compose -f docker-compose.monitoring.yml up -d; then
+        log_success "Uptime Kuma started"
+        log_info "Access dashboard at: https://your-domain.com/monitoring/"
+        log_info "On first visit, create admin account"
+        log_info ""
+        log_info "Recommended monitors to add:"
+        log_info "  1. Backend Health: https://your-domain.com/api/health (30s interval)"
+        log_info "  2. Frontend: https://your-domain.com/ (60s interval)"
+        log_info "  3. SSL Certificate: HTTPS monitor (daily)"
+    else
+        log_error "Failed to start Uptime Kuma"
+        log_warning "You can manually start it with: docker-compose -f docker-compose.monitoring.yml up -d"
+    fi
 }
 
 ###############################################################################
@@ -252,11 +309,14 @@ main() {
     setup_ssl
     start_services
     wait_for_health
+    run_e2e_tests
     verify_deployment
+    setup_monitoring
 
     log_success "Deployment completed successfully!"
     log_info "Application is available at: https://your-domain.com"
     log_info "Health check: curl https://your-domain.com/api/health"
+    log_info "Monitoring dashboard: https://your-domain.com/monitoring/"
 }
 
 # Run main function

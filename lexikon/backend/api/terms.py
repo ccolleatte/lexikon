@@ -1,6 +1,7 @@
 """
 Terms API endpoints with BOLA (Broken Object Level Authorization) fix.
 Requires ownership verification for all term access.
+Includes semantic search functionality for similarity-based term lookup.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -8,12 +9,14 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import uuid
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 from db.postgres import get_db, Term, User
 from auth.middleware import get_current_user
-from models import CreateTermRequest, TermResponse, ApiResponse
+from models import CreateTermRequest, TermResponse, ApiResponse, SearchTermRequest, SearchResponse, SearchResult
+from services.embeddings import embeddings_service
 
 router = APIRouter(prefix="/terms", tags=["terms"])
 
@@ -272,3 +275,103 @@ async def delete_term(
     except Exception as e:
         logger.error(f"Error deleting term {term_id}: {type(e).__name__}: {str(e)}", exc_info=True)
         raise
+
+
+@router.post("/search", response_model=SearchResponse)
+async def search_terms_semantic(
+    request: SearchTermRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Search for terms using semantic similarity.
+
+    Uses sentence-transformers embeddings to find semantically similar terms
+    based on the query text. Returns top-k results above the similarity threshold.
+
+    Args:
+        request: SearchTermRequest with query, threshold, and top_k
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        SearchResponse with matching terms sorted by similarity
+    """
+    start_time = time.time()
+
+    try:
+        logger.info(f"Semantic search for query: '{request.query}' (user: {current_user.id})")
+
+        # Generate embedding for the query
+        query_embedding = embeddings_service.generate_embedding(request.query)
+
+        if not query_embedding:
+            logger.warning(f"Failed to generate embedding for query: {request.query}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to generate embedding for query. Ensure sentence-transformers is installed."
+            )
+
+        # Get all terms for the current user that have embeddings
+        user_terms = db.query(Term).filter(
+            Term.created_by == current_user.id,
+            Term.embedding.isnot(None)  # Only search terms with embeddings
+        ).all()
+
+        if not user_terms:
+            logger.info(f"No terms with embeddings found for user {current_user.id}")
+            execution_time = (time.time() - start_time) * 1000  # Convert to ms
+            return SearchResponse(
+                query=request.query,
+                results=[],
+                total=0,
+                threshold_used=request.similarity_threshold,
+                execution_time_ms=round(execution_time, 2)
+            )
+
+        # Find similar terms
+        candidate_embeddings = [
+            (term.id, term.embedding) for term in user_terms
+        ]
+
+        similar_terms = embeddings_service.find_similar(
+            query_embedding=query_embedding,
+            candidate_embeddings=candidate_embeddings,
+            threshold=request.similarity_threshold,
+            top_k=request.top_k
+        )
+
+        # Enrich results with full term information
+        results = []
+        for sim_item in similar_terms:
+            term = next((t for t in user_terms if t.id == sim_item['term_id']), None)
+            if term:
+                results.append(SearchResult(
+                    term_id=term.id,
+                    term_name=term.name,
+                    definition=term.definition,
+                    similarity_score=sim_item['similarity_score'],
+                    domain=term.domain,
+                    level=term.level
+                ))
+
+        execution_time = (time.time() - start_time) * 1000  # Convert to ms
+
+        logger.info(f"Semantic search completed: {len(results)} results (query: {request.query}, user: {current_user.id})")
+
+        return SearchResponse(
+            query=request.query,
+            results=results,
+            total=len(results),
+            threshold_used=request.similarity_threshold,
+            execution_time_ms=round(execution_time, 2)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in semantic search: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Semantic search failed. Please try again."
+        )
