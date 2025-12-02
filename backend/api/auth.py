@@ -146,7 +146,8 @@ class ApiKeyResponse(BaseModel):
 
 # Endpoints
 @router.post("/register", status_code=201)
-async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit(RATE_LIMIT_AUTH)
+async def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
     """
     Register a new user account.
 
@@ -262,7 +263,8 @@ async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-async def login(payload: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit(RATE_LIMIT_AUTH)
+async def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate user with email and password using constant-time verification.
 
@@ -387,10 +389,11 @@ async def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh")
-async def refresh_token(request: RefreshTokenRequest):
+@limiter.limit(RATE_LIMIT_AUTH)
+async def refresh_token(request: Request, payload: RefreshTokenRequest):
     """Refresh access token using refresh token."""
 
-    new_access_token = refresh_access_token(request.refresh_token)
+    new_access_token = refresh_access_token(payload.refresh_token)
 
     if not new_access_token:
         return ApiResponse(

@@ -73,7 +73,7 @@ export async function logout(): Promise<void> {
 		console.error('Logout API error:', error);
 	} finally {
 		authStore.logout();
-		goto('/');
+		goto('/login');
 	}
 }
 

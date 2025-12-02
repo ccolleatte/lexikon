@@ -29,7 +29,7 @@
 
 	// Redirect if already authenticated
 	$: if ($isAuthenticated) {
-		goto('/terms');
+		goto('/profile');
 	}
 
 	// Check password match

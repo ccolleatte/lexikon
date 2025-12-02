@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { isAuthenticated } from '$lib/stores/auth';
 	import { login, loginWithOAuth } from '$lib/utils/auth';
 	import { ApiError } from '$lib/utils/api';
@@ -13,9 +14,12 @@
 	let isLoading = false;
 	let error: string | null = null;
 
+	// Get redirect URL from query params, default to /profile
+	$: redirectUrl = $page.url.searchParams.get('redirect') || '/profile';
+
 	// Redirect if already authenticated
 	$: if ($isAuthenticated) {
-		goto('/terms');
+		goto(redirectUrl);
 	}
 
 	async function handleSubmit() {
