@@ -7,8 +7,8 @@
 
 set -e
 
-REPO_DIR="/opt/lexikon"
-BACKUP_DIR="/opt/lexikon-backups"
+REPO_DIR="/root/lexikon"
+BACKUP_DIR="/root/lexikon-backups"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'

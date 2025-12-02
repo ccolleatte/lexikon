@@ -19,8 +19,8 @@ NC='\033[0m' # No Color
 # Configuration
 ENVIRONMENT=${1:-production}
 REPO_URL="https://github.com/ccolleatte/lexikon.git"
-REPO_DIR="/opt/lexikon"
-BACKUP_DIR="/opt/lexikon-backups"
+REPO_DIR="/root/lexikon"
+BACKUP_DIR="/root/lexikon-backups"
 
 ###############################################################################
 # Functions
