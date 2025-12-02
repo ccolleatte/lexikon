@@ -19,6 +19,33 @@ from config.secrets_validator import validate_secrets, SecretValidationError, is
 
 logger = logging.getLogger(__name__)
 
+# Initialize Sentry for error tracking (optional in production)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN and is_production():
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                FastApiIntegration(),
+                SqlalchemyIntegration(),
+                LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+            ],
+            traces_sample_rate=0.1,  # 10% of transactions
+            profiles_sample_rate=0.01,  # 1% for profiling
+            environment=os.getenv("ENVIRONMENT", "production"),
+            release=os.getenv("APP_VERSION", "unknown"),
+        )
+        logger.info("✓ Sentry initialized for error tracking")
+    except ImportError:
+        logger.warning("Sentry SDK not installed. Error tracking disabled.")
+    except Exception as e:
+        logger.error(f"Failed to initialize Sentry: {e}")
+
 # Create FastAPI app
 app = FastAPI(
     title="Lexikon API",
