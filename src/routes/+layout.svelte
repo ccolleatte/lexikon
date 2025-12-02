@@ -1,12 +1,14 @@
 <script lang="ts">
 	import '../app.css';
 	import NavBar from '$lib/components/NavBar.svelte';
+	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { onMount } from 'svelte';
 	import { waitLocale } from 'svelte-i18n';
 	import '$lib/i18n';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { isAuthenticated } from '$lib/stores/auth';
+	import { theme } from '$lib/stores/theme';
 	import { browser } from '$app/environment';
 
 	// Protected routes that require authentication
@@ -44,4 +46,5 @@
 </script>
 
 <NavBar />
+<ToastContainer />
 <slot />

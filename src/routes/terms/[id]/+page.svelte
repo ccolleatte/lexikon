@@ -3,7 +3,9 @@
 	import { onMount } from 'svelte';
 	import Button from '$components/Button.svelte';
 	import NavBar from '$lib/components/NavBar.svelte';
+	import RelationModal from '$lib/components/RelationModal.svelte';
 	import { apiCall } from '$lib/utils/api';
+	import { addToast } from '$lib/stores/notifications';
 
 	interface Term {
 		id: string;
@@ -28,6 +30,8 @@
 	let relations: Relation[] = [];
 	let loading = true;
 	let error: string | null = null;
+	let showRelationModal = false;
+	let deleting = false;
 
 	onMount(async () => {
 		await loadTerm();
@@ -86,6 +90,34 @@
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Erreur lors de la suppression';
 		}
+	}
+
+	async function deleteRelation(relationId: string) {
+		if (!confirm('Êtes-vous sûr de vouloir supprimer cette relation ?')) return;
+
+		try {
+			deleting = true;
+			const response = await apiCall(`/api/ontology/relations/${relationId}`, {
+				method: 'DELETE'
+			});
+
+			if (!response.success) {
+				throw new Error(response.error?.message || 'Erreur lors de la suppression');
+			}
+
+			addToast('success', 'Relation supprimée avec succès');
+			await loadTerm();
+		} catch (err) {
+			const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression';
+			addToast('error', errorMessage);
+		} finally {
+			deleting = false;
+		}
+	}
+
+	function handleRelationAdded() {
+		showRelationModal = false;
+		loadTerm();
 	}
 
 	function formatDate(dateStr: string): string {
@@ -186,13 +218,19 @@
 					</div>
 
 					<!-- Relations Card -->
-					{#if relations.length > 0}
-						<div class="bg-white rounded-lg border border-gray-200 p-6">
-							<h2 class="text-lg font-semibold text-gray-900 mb-4">Relations ({relations.length})</h2>
+					<div class="bg-white rounded-lg border border-gray-200 p-6">
+						<div class="flex items-center justify-between mb-4">
+							<h2 class="text-lg font-semibold text-gray-900">Relations ({relations.length})</h2>
+							<Button on:click={() => showRelationModal = true} variant="primary" size="sm">
+								+ Ajouter
+							</Button>
+						</div>
+
+						{#if relations.length > 0}
 							<div class="space-y-3">
 								{#each relations as relation (relation.id)}
 									<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-										<div>
+										<div class="flex-grow">
 											<p class="text-sm font-medium text-gray-700">
 												<span class="font-semibold">{relation.type}</span>
 											</p>
@@ -200,21 +238,26 @@
 												→ {relation.targetTermName}
 											</p>
 										</div>
-										<a href="/terms/{relation.targetTermId}" class="text-primary-600 hover:text-primary-700 text-sm">
-											Voir →
-										</a>
+										<div class="flex items-center gap-2 ml-4">
+											<a href="/terms/{relation.targetTermId}" class="text-primary-600 hover:text-primary-700 text-sm px-2 py-1 rounded hover:bg-primary-50">
+												Voir
+											</a>
+											<button
+												on:click={() => deleteRelation(relation.id)}
+												disabled={deleting}
+												class="text-red-600 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50 disabled:opacity-50"
+												title="Supprimer"
+											>
+												✕
+											</button>
+										</div>
 									</div>
 								{/each}
 							</div>
-						</div>
-					{:else}
-						<div class="bg-white rounded-lg border border-gray-200 p-6 text-center">
-							<p class="text-gray-600">Aucune relation définie.</p>
-							<Button href="/terms/{term.id}/edit" variant="outline" class="mt-4">
-								Ajouter une relation
-							</Button>
-						</div>
-					{/if}
+						{:else}
+							<p class="text-gray-600 text-center py-4">Aucune relation définie.</p>
+						{/if}
+					</div>
 				</div>
 
 				<!-- Sidebar -->
@@ -259,3 +302,13 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Relation Modal -->
+{#if showRelationModal && term}
+	<RelationModal
+		termId={term.id}
+		termName={term.name}
+		on:added={handleRelationAdded}
+		on:close={() => (showRelationModal = false)}
+	/>
+{/if}
