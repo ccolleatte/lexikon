@@ -1,0 +1,46 @@
+# Docker Compose for database migrations only
+# Usage: docker-compose -f docker-compose.migrate.yml run --rm migrate
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lexikon-postgres-migrate
+    restart: "no"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lexikon}
+      POSTGRES_USER: ${POSTGRES_USER:-lexikon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5435:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_migrate_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lexikon}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lexikon-network
+
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.migrate
+    container_name: lexikon-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lexikon}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexikon}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lexikon-network
+    command: alembic upgrade head
+
+volumes:
+  postgres_migrate_data:
+
+networks:
+  lexikon-network:
+    driver: bridge

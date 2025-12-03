@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy backend code and requirements
+COPY backend/requirements-migrate.txt .
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini .
+COPY backend/db ./db
+# Backend Python modules if needed
+
+# Install minimal dependencies
+RUN pip install --no-cache-dir -r requirements-migrate.txt
+
+# Run migrations
+ENV DATABASE_URL=postgresql://lexikon:lexikon@postgres:5432/lexikon
+CMD ["alembic", "upgrade", "head"]

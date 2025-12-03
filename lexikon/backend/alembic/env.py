@@ -24,10 +24,14 @@ if config.config_file_name is not None:
 from db.postgres import Base
 target_metadata = Base.metadata
 
-# Set the sqlalchemy.url from environment or default
-if not config.get_section(config.config_ini_section).get("sqlalchemy.url"):
+# Set the sqlalchemy.url from environment variable or default
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    # Fallback to db.postgres DATABASE_URL if env var not set
     from db.postgres import DATABASE_URL
-    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+    database_url = DATABASE_URL
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
